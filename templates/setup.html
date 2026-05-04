@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ResTail — Setup</title>
+<title>ResTail - Setup</title>
 <style>
   :root {
     --bg: #0C0F18; --surface: #131620; --surface2: #1A1E2E;
@@ -62,8 +62,8 @@
 </head>
 <body>
 <div class="container">
-  <div class="logo">RESTAIL</div>
-  <div class="subtitle">One-time setup — your config is saved locally and never uploaded anywhere.</div>
+  <div class="logo">ResTail</div>
+  <div class="subtitle">One-time setup - your config is saved locally and never uploaded anywhere.</div>
 
   <div id="alertBox"></div>
 
@@ -123,8 +123,8 @@
     <div class="card">
       <div class="card-title">Resume &amp; Template Files <span class="required">*</span></div>
       <div class="section-note">
-        <strong>Master Resume</strong> — your complete professional record (all jobs, projects, skills, education, certifications). The AI only uses content from this file — nothing is invented.<br><br>
-        <strong>Format Template</strong> — describes the 1-page resume layout. A plain text description of how sections should be ordered and formatted.
+        <strong>Master Resume</strong> - your complete professional record (all jobs, projects, skills, education, certifications). The AI only uses content from this file - nothing is invented.<br><br>
+        <strong>Format Template</strong> - describes the 1-page resume layout. A plain text description of how sections should be ordered and formatted.
       </div>
 
       <div class="field">
@@ -136,7 +136,7 @@
           <div class="file-name" id="masterName"></div>
         </div>
         {% if existing.get('master_resume_path') %}
-        <div class="hint">Currently: {{ existing.get('master_resume_path','').split('/')[-1].split('\\')[-1] }} — leave empty to keep.</div>
+        <div class="hint">Currently: {{ existing.get('master_resume_path','').split('/')[-1].split('\\')[-1] }} - leave empty to keep.</div>
         {% endif %}
       </div>
 
@@ -149,7 +149,7 @@
           <div class="file-name" id="fmtName"></div>
         </div>
         {% if existing.get('format_template_path') %}
-        <div class="hint">Currently: {{ existing.get('format_template_path','').split('/')[-1].split('\\')[-1] }} — leave empty to keep.</div>
+        <div class="hint">Currently: {{ existing.get('format_template_path','').split('/')[-1].split('\\')[-1] }} - leave empty to keep.</div>
         {% endif %}
       </div>
     </div>
@@ -158,12 +158,12 @@
     <div class="card">
       <div class="card-title">Job Search Preferences <span class="required">*</span></div>
       <div class="field">
-        <label>Location priorities — one per line, searched in order from top <span class="required">*</span></label>
+        <label>Location priorities - one per line, searched in order from top <span class="required">*</span></label>
         <textarea name="locations" rows="6" placeholder="Chicago, Illinois&#10;New York, New York&#10;San Francisco, California&#10;Austin, Texas&#10;Seattle, Washington">{{ '\n'.join(existing.get('locations', ['Chicago, Illinois','New York, New York','San Francisco, California','Austin, Texas','Seattle, Washington'])) }}</textarea>
         <div class="hint">First location is searched first. If not enough results, expands to next location.</div>
       </div>
       <div class="field">
-        <label>Job titles to search — one per line <span class="required">*</span></label>
+        <label>Job titles to search - one per line <span class="required">*</span></label>
         <textarea name="job_titles" rows="6" placeholder="Data Scientist&#10;Machine Learning Engineer&#10;AI Engineer&#10;Data Analyst&#10;Data Engineer">{{ '\n'.join(existing.get('job_titles', ['Data Scientist','Machine Learning Engineer','AI Engineer','Data Analyst','Data Engineer'])) }}</textarea>
         <div class="hint">The pipeline searches all boards for each title listed here.</div>
       </div>
