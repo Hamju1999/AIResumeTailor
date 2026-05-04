@@ -308,7 +308,7 @@ Check the live log for "Verification FAILED" or "Validation FAILED" messages wit
 ## File structure
 
 ```
-ResTail/
+AIResumeTailor/
 ├── app.py                  ← Start here: python app.py
 ├── config.py               ← Reads from user_config.json
 ├── user_config.json        ← Your personal settings (created by setup wizard)
