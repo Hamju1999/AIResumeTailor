@@ -4,8 +4,8 @@ ResTail automatically scrapes job listings and tailors your resume to each job u
 
 ## What it does
 
-1. Scrapes LinkedIn, Indeed, Dice, and Glassdoor for entry-level jobs matching your titles
-2. Filters by location priority, date (last 7 days), seniority (entry-level only)
+1. Scrapes LinkedIn, Indeed, Dice, Glassdoor, Handshake and Interstride for entry-level to senior-level jobs matching your titles
+2. Filters by location priority, date (last 7 days)
 3. For each job: tailors your resume using 5 AI passes (tailor → grammar → verify → calibrate → validate)
 4. Produces a formatted `.docx` resume for every passing job
 5. Lets you paste job URLs you found yourself to bypass scraping
@@ -90,7 +90,7 @@ pip3 install --user -r requirements.txt
 2. Sign up or log in
 3. Click **API Keys** in the left sidebar
 4. Click **Create Key**
-5. Copy the key (starts with `sk-ant-...`) — you will only see it once, save it somewhere safe
+5. Copy the key (starts with `sk-ant-...`) - you will only see it once, save it somewhere safe
 
 The API key is charged per use.
 
