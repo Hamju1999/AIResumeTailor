@@ -198,7 +198,7 @@ def _scrape_linkedin(title: str, location: str) -> list[RawJob]:
             "location": location,
             "f_TPR":    f"r{config.DAYS_OLD * 86400}",
             "f_JT":     "F,I",
-            "f_E":      "1,2",
+            "f_E":      {"entry": "1,2", "mid": "3", "senior": "4"}.get(config.EXPERIENCE_LEVEL, "1,2"),
             "start":    start,
             "count":    25,
         })
@@ -294,7 +294,7 @@ def _scrape_indeed(title: str, location: str) -> list[RawJob]:
         "fromage": config.DAYS_OLD,
         "limit":   min(config.RESULTS_PER_TITLE, 50),
         "sort":    "date",
-        "explvl":  "entry_level",
+        "explvl":  {"entry": "entry_level", "mid": "mid_level", "senior": "senior_level"}.get(config.EXPERIENCE_LEVEL, "entry_level"),
     })
     if r is None:
         return []
@@ -539,7 +539,7 @@ def _filter_by_seniority(jobs: list[RawJob]) -> list[RawJob]:
     """Drop senior/staff/principal/lead/director titles."""
     kept, dropped = [], 0
     for j in jobs:
-        if _is_senior_title(j.title):
+        if _is_senior_title(j.title) and config.EXPERIENCE_LEVEL != "senior":
             log.debug(f"Seniority: dropped '{j.title}' @ {j.company}")
             dropped += 1
         else:
