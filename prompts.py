@@ -55,9 +55,12 @@ JD ALIGNMENT: Each bullet must use the specific language of the JD.
 <PROJ_BULLET_INSTRUCTION>
 Each bullet starts with "- " (dash space) followed by an action verb.
 No first-person "I" — start directly with the verb.
-  Bullet 1: what you built — the main contribution connected to this JD.
-  Bullet 2: tools, methods, or techniques used — prioritise ones the JD mentions.
-  Bullet 3: outcome, result, or additional technical detail relevant to this JD.
+  Bullet 1: what you built and who used it — connect to this JD and name the audience or outcome.
+  Bullet 2: tools and methods used — name specific tools the JD mentions and any modern stack tools.
+  Bullet 3-5: mix of: technical detail, measurable outcome, process automated, or team/business impact.
+  Every bullet must answer "so what?" — if it only describes the task, add the result.
+  Use business language for outcomes: time saved, errors reduced, process automated, reporting enabled.
+  Never invent numbers — use only scope markers from the master resume (300 files, 5.7M records, etc.).
 
 CRITICAL FORMAT FOR PROJECTS IN JSON:
 The project name MUST be on its own separate line.
