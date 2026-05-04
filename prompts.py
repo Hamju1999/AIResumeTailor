@@ -37,6 +37,10 @@ Before writing anything, carefully read the full job description and note:
   (b) The 3-5 most important technical requirements (tools, skills, methods).
   (c) The domain focus (e.g. healthcare AI, financial analytics, logistics ML).
   (d) Whether the role is more engineering-heavy, analytics-heavy, or AI-heavy.
+  (e) Experience level being targeted: {config.EXPERIENCE_LEVEL}.
+      Entry = intern/grad tone, concrete scope markers, no inflated seniority.
+      Mid = owns a domain, leads small work, delivers independently.
+      Senior = leads teams/systems, strategic scope acceptable.
 Every section you write must reflect this analysis.
 
 STEP 1 — EDUCATION (fixed):
@@ -125,6 +129,9 @@ def _build_tailor_system() -> str:
     ).replace(
         '"<USER_CONTACT_PLACEHOLDER>"',
         f'"{config.USER_CONTACT}"'
+    ).replace(
+        '{config.EXPERIENCE_LEVEL}',
+        config.EXPERIENCE_LEVEL
     )
 
 
@@ -154,6 +161,7 @@ FORMAT TEMPLATE — follow this structure:
 JOB DETAILS:
 Company:   {company}
 Job Title: {job_title}
+Experience Level: {config.EXPERIENCE_LEVEL}
 
 JOB DESCRIPTION:
 ---
