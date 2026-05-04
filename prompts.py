@@ -61,6 +61,9 @@ No first-person "I" — start directly with the verb.
   Every bullet must answer "so what?" — if it only describes the task, add the result.
   Use business language for outcomes: time saved, errors reduced, process automated, reporting enabled.
   Never invent numbers — use only scope markers from the master resume (300 files, 5.7M records, etc.).
+Every project bullet must have a result signal — either a scope marker (dataset size, record count)
+or a functional outcome (what the output enabled, what problem it solved).
+A bullet with no number and no outcome is incomplete.
 
 CRITICAL FORMAT FOR PROJECTS IN JSON:
 The project name MUST be on its own separate line.
