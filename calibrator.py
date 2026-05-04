@@ -105,6 +105,31 @@ HOW TO FIX IT:
   "Built a Tesseract pipeline to extract data from 300 shipping PDFs" is
   more credible than "Engineered a production-grade OCR extraction system."
 
+CONTROL 3b — OUTCOME AND BUSINESS LANGUAGE INJECTION:
+For every bullet that describes an action without any result, add a brief outcome.
+Rules:
+  a) If a bullet ends with what was built but not why it mattered, append the
+     business consequence. Use language the business cares about:
+     time saved, errors reduced, process automated, team unblocked, data made reliable.
+  b) Translate technical actions into business outcomes where the master resume supports it:
+     "consolidated 300+ Excel workbooks" → "...reducing manual reconciliation time"
+     "built OCR pipeline" → "...replacing a manual 3-day process"
+     "designed LLM validation framework" → "...reducing data entry errors in business-critical records"
+  c) Only add outcomes that are plausible given the described work and scope.
+     Do not invent specific percentages or dollar figures not in the original text.
+  d) Outcome language should be plain: "saving X hours", "reducing errors",
+     "enabling faster reporting" — not corporate buzzwords.
+  e) Every bullet should answer: "so what?" If it doesn't, fix it.
+
+CONTROL 3c — TOOL AND PLATFORM VISIBILITY:
+Ensure modern tools appear naturally in bullets when the work used them.
+  a) If cloud platforms (AWS S3, GCP, Azure) are mentioned in the experience
+     or projects, ensure at least one bullet per section names the specific service.
+  b) If AI tools (specific LLM APIs, OpenRouter, LangChain) were used, name them
+     in the relevant bullet — not just in the skills section.
+  c) If BI or data warehouse tools appear in the master resume, surface them
+     in context: "queried via SQL on Snowflake" not just "used SQL".
+
 ========================================================================
 CONTROL 4 — ATS NATURAL KEYWORD INTEGRATION
 ========================================================================
