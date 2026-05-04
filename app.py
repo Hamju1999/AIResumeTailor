@@ -1,5 +1,5 @@
 """
-ResTail Web UI — Flask app on localhost:5000
+ResTail Web UI - Flask app on localhost:5000
 
 First run: redirects to /setup where user uploads their files and enters their info.
 Config is saved to user_config.json (persistent, gitignored).
@@ -409,6 +409,6 @@ if __name__ == "__main__":
     print("  ResTail")
     print("  Open your browser: http://localhost:5000")
     if not config.is_setup_complete():
-        print("  First run detected — setup wizard will open.")
+        print("  First run detected - setup wizard will open.")
     print("="*55 + "\n")
     app.run(host="127.0.0.1", port=5000, debug=False, threaded=True)
