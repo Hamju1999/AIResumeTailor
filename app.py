@@ -154,6 +154,7 @@ def api_setup():
             "format_template_path":  fmt_path,
             "locations":             locations,
             "job_titles":            job_titles,
+            "experience_level":      form.get("experience_level", "entry"),
             "anthropic_api_key":     form.get("anthropic_api_key", "").strip(),
         }
 
