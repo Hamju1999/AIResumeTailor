@@ -72,6 +72,9 @@ JOB_TITLES: list[str] = _cfg.get("job_titles") or [
     "Data Engineer",
 ]
 
+# Options: "entry", "mid", "senior"
+EXPERIENCE_LEVEL: str = _cfg.get("experience_level", "entry")
+
 # ── Pipeline controls ──────────────────────────────────────────────────────────
 MAX_RETRIES           = 2
 SCRAPE_DELAY_SEC      = 1.5
