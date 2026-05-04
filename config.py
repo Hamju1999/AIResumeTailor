@@ -52,9 +52,8 @@ RESULTS_PER_TITLE = 15
 LOCATIONS: list[str] = _cfg.get("locations") or [
     "New York, New York",
     "San Francisco, California",
-    "Austin, Texas",
+    "Houston, Texas",
     "Chicago, Illinois",
-    "Seattle, Washington",
 ]
 
 JOB_BOARDS: list[str] = [
@@ -62,6 +61,8 @@ JOB_BOARDS: list[str] = [
     "indeed",
     "dice",
     "glassdoor",
+    "handshake",
+    "interstride",
 ]
 
 JOB_TITLES: list[str] = _cfg.get("job_titles") or [
@@ -72,7 +73,7 @@ JOB_TITLES: list[str] = _cfg.get("job_titles") or [
     "Data Engineer",
 ]
 
-# Options: "entry", "mid", "senior"
+# ── Experience level (entry / mid / senior) ──────────────────────────────────
 EXPERIENCE_LEVEL: str = _cfg.get("experience_level", "entry")
 
 # ── Pipeline controls ──────────────────────────────────────────────────────────
@@ -110,3 +111,4 @@ def reload():
     ANTHROPIC_API_KEY    = _cfg.get("anthropic_api_key") or os.environ.get("ANTHROPIC_API_KEY", "")
     LOCATIONS            = _cfg.get("locations") or LOCATIONS
     JOB_TITLES           = _cfg.get("job_titles") or JOB_TITLES
+    EXPERIENCE_LEVEL     = _cfg.get("experience_level", "entry")

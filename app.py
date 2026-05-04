@@ -163,7 +163,7 @@ def api_setup():
         )
         config.reload()
 
-        logging.getLogger("setup").info("Setup complete — configuration saved.")
+        logging.getLogger("setup").info("Setup complete - configuration saved.")
         return jsonify({"ok": True, "redirect": "/"})
 
     except Exception as e:
@@ -312,7 +312,7 @@ async def _run_custom_urls(urls: list[str]):
     from bs4 import BeautifulSoup
 
     log = logging.getLogger("ui.custom")
-    pl.load_content()
+    await pl.load_content()
     jobs = []
 
     for url in urls:

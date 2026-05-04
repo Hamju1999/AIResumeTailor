@@ -1,14 +1,18 @@
-# ResTail - Agentic Job Application Pipeline
+# ResTail — Agentic Job Application Pipeline
 
-ResTail automatically scrapes job listings and tailors your resume to each job using AI. It runs entirely on your computer - nothing is sent to any server except the Anthropic API for AI processing.
+ResTail automatically scrapes job listings and tailors your resume to each job using AI. It runs entirely on your computer — nothing is sent to any server except the Anthropic API for AI processing.
+
+---
 
 ## What it does
 
-1. Scrapes LinkedIn, Indeed, Dice, Glassdoor, Handshake and Interstride for entry-level to senior-level jobs matching your titles
-2. Filters by location priority, date (last 7 days)
+1. Scrapes LinkedIn, Indeed, Dice, and Glassdoor for entry-level jobs matching your titles
+2. Filters by location priority, date (last 7 days), seniority (entry-level only)
 3. For each job: tailors your resume using 5 AI passes (tailor → grammar → verify → calibrate → validate)
 4. Produces a formatted `.docx` resume for every passing job
 5. Lets you paste job URLs you found yourself to bypass scraping
+
+---
 
 ## Requirements
 
@@ -16,9 +20,11 @@ ResTail automatically scrapes job listings and tailors your resume to each job u
 - Git
 - An Anthropic API key (get one free at [console.anthropic.com](https://console.anthropic.com))
 
-## Setup - Step by Step
+---
 
-### Step 1 - Install Git
+## Setup — Step by Step
+
+### Step 1 — Install Git
 
 **Windows:** Download from [git-scm.com](https://git-scm.com/download/win) and install with all defaults.
 
@@ -37,7 +43,9 @@ Verify:
 git --version
 ```
 
-### Step 2 - Install Python
+---
+
+### Step 2 — Install Python
 
 **Windows:** Download Python 3.11 from [python.org/downloads](https://www.python.org/downloads). During install, **tick "Add Python to PATH"**.
 
@@ -58,7 +66,9 @@ python --version        # Windows
 python3 --version       # Mac/Linux
 ```
 
-### Step 3 - Clone the repository
+---
+
+### Step 3 — Clone the repository
 
 ```bash
 git clone https://github.com/YOUR_USERNAME/ResTail.git
@@ -67,7 +77,9 @@ cd ResTail
 
 Replace `YOUR_USERNAME` with the GitHub username who shared this with you.
 
-### Step 4 - Install dependencies
+---
+
+### Step 4 — Install dependencies
 
 **Windows:**
 ```cmd
@@ -84,17 +96,21 @@ If you see a permissions error on Mac/Linux:
 pip3 install --user -r requirements.txt
 ```
 
-### Step 5 - Get an Anthropic API key
+---
+
+### Step 5 — Get an Anthropic API key
 
 1. Go to [console.anthropic.com](https://console.anthropic.com)
 2. Sign up or log in
 3. Click **API Keys** in the left sidebar
 4. Click **Create Key**
-5. Copy the key (starts with `sk-ant-...`) - you will only see it once, save it somewhere safe
+5. Copy the key (starts with `sk-ant-...`) — you will only see it once, save it somewhere safe
 
-The API key is charged per use.
+The API key is charged per use. A typical run of 10 jobs costs approximately $0.30–$0.60.
 
-### Step 6 - Run the app
+---
+
+### Step 6 — Run the app
 
 **Windows:**
 ```cmd
@@ -112,7 +128,9 @@ Open your browser and go to: **http://localhost:5000**
 
 On first run, the setup wizard opens automatically.
 
-### Step 7 - Complete the setup wizard
+---
+
+### Step 7 — Complete the setup wizard
 
 The wizard asks for:
 
@@ -133,11 +151,13 @@ The wizard asks for:
 
 After saving, your config is stored in `user_config.json` locally. You never need to fill this in again unless you want to change something.
 
+---
+
 ## Preparing your files
 
 ### Master Resume file
 
-**What it is:** Your complete professional record - every job, every project, every skill, every certification you have ever had. The AI uses this as the only source of truth. Nothing is invented - everything in the output must trace back to this file.
+**What it is:** Your complete professional record — every job, every project, every skill, every certification you have ever had. The AI uses this as the only source of truth. Nothing is invented — everything in the output must trace back to this file.
 
 **Format:** Plain text file (`.txt`) is recommended. PDF works only if it has a text layer (not a scanned image).
 
@@ -163,7 +183,7 @@ For each role:
   - Include numbers where you have them (records processed, files handled, % improvement)
   - Include the scope (team size, dataset size, time frame)
   
-  Write freely and in detail - the AI will select and condense.
+  Write freely and in detail — the AI will select and condense.
   More detail is better than less.
 
 ACADEMIC PROJECTS
@@ -179,8 +199,8 @@ For each project:
 
 TECHNICAL SKILLS
 List every tool, language, framework, library, and method you have used.
-Group them however you like - the AI will regroup them by relevance.
-Be exhaustive - do not leave skills out.
+Group them however you like — the AI will regroup them by relevance.
+Be exhaustive — do not leave skills out.
 
 CERTIFICATIONS
 For each certification:
@@ -191,6 +211,8 @@ AWARDS AND RECOGNITION (if any)
 ```
 
 **Important:** Write naturally and in detail. The AI reads this file to understand what you have actually done. Vague entries like "used Python" produce vague resumes. Specific entries like "built a Python ETL pipeline to process 5.7 million CSV records across 12 monthly files" produce specific, credible resumes.
+
+---
 
 ### Format Template file
 
@@ -208,17 +230,17 @@ Margins: 0.55 inches all sides
 Font: Calibri
 
 SECTIONS AND ORDER:
-1. Name - bold, 16pt, centered, ALL CAPS
-2. Contact line - 10pt, centered (City | Phone | Email | LinkedIn | GitHub | Portfolio)
-3. Summary - 2 sentences, first-person
-4. Technical Skills - 3 lines grouped as:
+1. Name — bold, 16pt, centered, ALL CAPS
+2. Contact line — 10pt, centered (City | Phone | Email | LinkedIn | GitHub | Portfolio)
+3. Summary — 2 sentences, first-person
+4. Technical Skills — 3 lines grouped as:
    Programming & Engineering: [tools]
    Applied AI & NLP: [tools]
    Analytics & Visualization: [tools]
-5. Professional Experience - role header bold 12pt, then 4-5 bullet points
-6. Academic Projects - project title bold 12pt with colon, then 3 bullet points each
-7. Education - institution bold 12pt, degree 11pt
-8. Certifications - bulleted list, top 3 most relevant only (if applicable)
+5. Professional Experience — role header bold 12pt, then 4-5 bullet points
+6. Academic Projects — project title bold 12pt with colon, then 3 bullet points each
+7. Education — institution bold 12pt, degree 11pt
+8. Certifications — bulleted list, top 3 most relevant only (if applicable)
 
 BULLET FORMAT:
 - Each bullet starts with an action verb
@@ -232,6 +254,8 @@ Describe what was built and how it works.
 ```
 
 You can customise this to match your preferred format. The AI will follow whatever structure you describe.
+
+---
 
 ## Using the app
 
@@ -259,6 +283,8 @@ This skips scraping entirely and goes straight to AI tailoring. Useful for jobs 
 
 Every run is saved. Click **History** to download resumes from previous runs.
 
+---
+
 ## Changing your config
 
 To update your name, files, locations, job titles, or API key:
@@ -269,6 +295,8 @@ To update your name, files, locations, job titles, or API key:
 4. Click **Save Configuration**
 
 Files you don't re-upload are kept as-is.
+
+---
 
 ## Keeping the code up to date
 
@@ -287,6 +315,8 @@ python3 app.py       # Mac/Linux
 
 Your `user_config.json` and uploaded files are preserved across updates.
 
+---
+
 ## Troubleshooting
 
 **"No module named X" error:**
@@ -298,14 +328,16 @@ pip3 install -r requirements.txt         # Mac/Linux
 **"401 Invalid authentication credentials":**
 Your API key is wrong or missing. Go to `/setup` and re-enter it.
 
-**"No .docx files - nothing to zip" (all jobs failed):**
+**"No .docx files — nothing to zip" (all jobs failed):**
 Open the manifest JSON in `output/manifest_*.json` and check the `failures` array for the specific reason.
 
-**App won't start - port already in use:**
+**App won't start — port already in use:**
 Something else is running on port 5000. Either stop it, or change the port in `app.py` (last line: `port=5000`).
 
 **Jobs scrape but no resumes produced:**
 Check the live log for "Verification FAILED" or "Validation FAILED" messages with the specific reason.
+
+---
 
 ## File structure
 
@@ -324,14 +356,32 @@ ResTail/
 └── requirements.txt        ← Python dependencies
 ```
 
+---
+
 ## Privacy
 
 - Everything runs on your computer
 - Your master resume never leaves your machine except in API calls to Anthropic
-- `user_config.json` is gitignored - it is never pushed to GitHub
-- The app is only accessible at `localhost:5000` - not visible to anyone else on the internet
+- `user_config.json` is gitignored — it is never pushed to GitHub
+- The app is only accessible at `localhost:5000` — not visible to anyone else on the internet
+
+---
+
+## Cost estimate
+
+Each job processed uses approximately 33,000 input tokens across 5 AI passes.
+At Anthropic's current pricing for claude-sonnet-4-6:
+
+| Jobs | Estimated cost |
+|------|---------------|
+| 5    | ~$0.15        |
+| 20   | ~$0.60        |
+| 50   | ~$1.50        |
+| 100  | ~$3.00        |
 
 Use `--limit 3` or the limit field in the UI to test before running large batches.
+
+---
 
 ## CLI (advanced)
 

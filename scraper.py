@@ -127,10 +127,12 @@ async def discover_jobs() -> list[Job]:
     all_raw: list[RawJob] = []
 
     scrapers = {
-        "linkedin":  _scrape_linkedin,
-        "indeed":    _scrape_indeed,
-        "dice":      _scrape_dice,
-        "glassdoor": _scrape_glassdoor,
+        "linkedin":    _scrape_linkedin,
+        "indeed":      _scrape_indeed,
+        "dice":        _scrape_dice,
+        "glassdoor":   _scrape_glassdoor,
+        "handshake":   _scrape_handshake,
+        "interstride": _scrape_interstride,
     }
     active = [b for b in config.JOB_BOARDS if b in scrapers]
     if not active:
@@ -513,6 +515,152 @@ def _gd_description(url: str) -> str:
         el = soup.select_one(sel)
         if el:
             return el.get_text(separator="\n", strip=True)
+    return ""
+
+
+
+# ── Handshake ─────────────────────────────────────────────────────────────────
+# Public job search — no auth required for browsing
+_HANDSHAKE_SEARCH = "https://app.joinhandshake.com/stu/postings"
+
+def _scrape_handshake(title: str, location: str) -> list[RawJob]:
+    """
+    Handshake public job search. Targets early-career / internship / new-grad roles.
+    Uses the public API endpoint that the Handshake website itself calls.
+    """
+    results: list[RawJob] = []
+    try:
+        r = _get(
+            "https://app.joinhandshake.com/stu/postings",
+            params={
+                "page":                1,
+                "per_page":            min(config.RESULTS_PER_TITLE, 25),
+                "sort_direction":      "desc",
+                "sort_column":         "created_at",
+                "job_type_names[]":    ["Job", "Internship"],
+                "query":               title,
+                "location":            location,
+                "distance":            50,
+            },
+        )
+        if r is None:
+            return []
+        soup = BeautifulSoup(r.text, "html.parser")
+        # Handshake renders server-side HTML for public pages
+        cards = soup.find_all("li", attrs={"data-hook": "posting-item"}) or                 soup.find_all("div", class_=re.compile(r"posting|job-card"))
+        for card in cards[:config.RESULTS_PER_TITLE]:
+            try:
+                a      = card.find("a")
+                url    = urljoin("https://app.joinhandshake.com", a.get("href", "")) if a else ""
+                if not url:
+                    continue
+                t_el   = card.find(class_=re.compile(r"title|name|posting"))
+                c_el   = card.find(class_=re.compile(r"company|employer"))
+                title_ = t_el.get_text(strip=True) if t_el else title
+                company= c_el.get_text(strip=True) if c_el else "Unknown"
+
+                if _is_senior_title(title_):
+                    continue
+                if not _is_relevant_title(title_):
+                    continue
+
+                desc = _get_description_from_page(url)
+                if not desc or len(desc) < MIN_DESC_LEN:
+                    continue
+
+                results.append(RawJob(
+                    job_url=url, title=title_, company=company,
+                    location=location, date_posted=None,
+                    description=desc, board="handshake",
+                ))
+                time.sleep(1.0)
+            except Exception as e:
+                log.debug(f"Handshake card error: {e}")
+    except Exception as e:
+        log.debug(f"Handshake scrape error: {e}")
+    return results
+
+
+# ── Interstride ───────────────────────────────────────────────────────────────
+# Targets international student / OPT / STEM OPT job seekers specifically.
+# Public job board — no auth required for basic listing pages.
+_INTERSTRIDE_SEARCH = "https://app.interstride.com/jobs"
+
+def _scrape_interstride(title: str, location: str) -> list[RawJob]:
+    """
+    Interstride job board targeting OPT/CPT/H1B-friendly postings.
+    Scrapes the public job listing page.
+    """
+    results: list[RawJob] = []
+    try:
+        r = _get(
+            "https://interstride.com/jobs/",
+            params={
+                "s":        title,
+                "location": location,
+                "type":     "job",
+            },
+        )
+        if r is None:
+            return []
+        soup = BeautifulSoup(r.text, "html.parser")
+        cards = (
+            soup.find_all("article", class_=re.compile(r"job|posting")) or
+            soup.find_all("div",     class_=re.compile(r"job-listing|job-card"))
+        )
+        for card in cards[:config.RESULTS_PER_TITLE]:
+            try:
+                a      = card.find("a")
+                url    = urljoin("https://interstride.com", a.get("href", "")) if a else ""
+                if not url:
+                    continue
+                t_el   = card.find(class_=re.compile(r"title|job-title"))
+                c_el   = card.find(class_=re.compile(r"company|employer"))
+                title_ = t_el.get_text(strip=True) if t_el else title
+                company= c_el.get_text(strip=True) if c_el else "Unknown"
+
+                if _is_senior_title(title_):
+                    continue
+                if not _is_relevant_title(title_):
+                    continue
+                if _is_spam_company(company):
+                    continue
+
+                desc = _get_description_from_page(url)
+                if not desc or len(desc) < MIN_DESC_LEN:
+                    continue
+
+                results.append(RawJob(
+                    job_url=url, title=title_, company=company,
+                    location=location, date_posted=None,
+                    description=desc, board="interstride",
+                ))
+                time.sleep(1.0)
+            except Exception as e:
+                log.debug(f"Interstride card error: {e}")
+    except Exception as e:
+        log.debug(f"Interstride scrape error: {e}")
+    return results
+
+
+def _get_description_from_page(url: str) -> str:
+    """Generic description extractor — tries common selectors across job boards."""
+    r = _get(url)
+    if r is None:
+        return ""
+    soup = BeautifulSoup(r.text, "html.parser")
+    for sel in [
+        ".description__text", ".show-more-less-html__markup",
+        "#jobDescriptionText", ".jobsearch-jobDescriptionText",
+        "[data-testid='jobDescriptionText']", ".JobDetails_jobDescription",
+        "[data-test='jobDescriptionContent']", ".job-description",
+        ".posting-description", ".job-details-body", "article", "main",
+    ]:
+        el = soup.select_one(sel)
+        if el:
+            text = el.get_text(separator="\n", strip=True)
+            if len(text) > 150:
+                return text
     return ""
 
 

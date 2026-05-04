@@ -1,19 +1,8 @@
 """
-Phase 5 — Format Validator (Layer A only — rule-based, deterministic)
+Phase 5 — Format Validator (rule-based, deterministic)
 
-Checks:
-  1. All 5 required sections populated
-  2. Skills section has all 3 group headers
-  3. No bullet characters in experience or projects
-  4. Summary: max 2 sentences
-  5. Each project block: max 2 sentences
-  6. Max 3 projects (2 required, 3rd only if JD-aligned)
-  7. Experience: 4 to 5 bullet points PER ROLE
-  8. Overall line count within 1-page limit
-
-Character count checks were removed — sentence count already enforces conciseness,
-and character limits proved impossible to satisfy reliably because sentence length
-depends on word choice, not character arithmetic.
+All limits (project count, bullet counts, skill groups, page length) come from
+FormatParams parsed from the user's format template — nothing is hardcoded.
 """
 
 from __future__ import annotations
@@ -22,21 +11,24 @@ import logging
 import re
 
 from models import TailoredResume, ValidationIssue, ValidationResult
+from format_parser import FormatParams
 
 log = logging.getLogger("validator")
 
-REQUIRED_FIELDS  = ["summary", "skills", "experience", "projects", "education"]
-MAX_LINES_CUTOFF = 65
+REQUIRED_FIELDS = ["summary", "skills", "experience", "projects", "education"]
 
-# Sentence boundary: punctuation followed by space+Capital or end of string.
-# Avoids counting decimal points (1.2 GB), model names (GPT-4), abbreviations.
+# Sentence boundary — avoids counting decimals (1.2 GB), model names (GPT-4)
 SENT_RE = re.compile(r'[.!?]+(?:\s+[A-Z]|$)')
 
 
 async def validate_resume(
     resume: TailoredResume,
     format_template: str,
+    fmt: FormatParams | None = None,
 ) -> ValidationResult:
+
+    if fmt is None:
+        fmt = FormatParams()   # safe defaults
 
     log.info(f"Validating: {resume.target_title}")
     issues: list[ValidationIssue] = []
@@ -50,9 +42,9 @@ async def validate_resume(
                 suggestion=f"Populate '{field}' from the master resume.",
             ))
 
-    # ── 2. All 3 skill group headers present ──────────────────────────────────
+    # ── 2. Skill group headers — dynamic from format template ─────────────────
     skills_text = resume.skills or ""
-    for group in ["Programming & Engineering", "Applied AI & NLP", "Analytics & Visualization"]:
+    for group in fmt.skill_groups:
         if group not in skills_text:
             issues.append(ValidationIssue(
                 category="format",
@@ -60,30 +52,30 @@ async def validate_resume(
                 suggestion=f"Add a line starting with '{group}:' to the skills section.",
             ))
 
-    # ── 3. No bullet characters in experience or projects ─────────────────────
+    # ── 3. No stray bullet characters (•, ▸, –) in experience or projects ─────
     bullet_re = re.compile(r"^[\s]*[•\*▸–]\s", re.MULTILINE)
     for field in ["experience", "projects"]:
         val = getattr(resume, field, "") or ""
         if bullet_re.search(val):
             issues.append(ValidationIssue(
                 category="style",
-                description=f"Bullet characters found in '{field}'. Must be narrative paragraphs.",
-                suggestion="Remove all bullet characters. Write as flowing first-person sentences.",
+                description=f"Stray bullet characters found in '{field}'.",
+                suggestion="Use '- ' (dash space) bullets only, not •, ▸, or –.",
             ))
 
-    # ── 4. Summary: max 2 sentences ───────────────────────────────────────────
+    # ── 4. Summary sentence count — dynamic ───────────────────────────────────
     summary_sc = len(SENT_RE.findall(resume.summary or ""))
-    if summary_sc > 2:
+    if summary_sc > fmt.summary_sentences:
         issues.append(ValidationIssue(
             category="length",
-            description=f"Summary has {summary_sc} sentences. Maximum is 2.",
-            suggestion=(
-                "Trim to exactly 2 sentences. Each sentence must be concise — "
-                "one main clause, no 'and' chains."
+            description=(
+                f"Summary has {summary_sc} sentences. "
+                f"Format requires {fmt.summary_sentences}."
             ),
+            suggestion=f"Trim to exactly {fmt.summary_sentences} sentences.",
         ))
 
-    # ── 5. Each project block: exactly 3 bullet points ─────────────────────────
+    # ── 5. Project bullet count — dynamic ─────────────────────────────────────
     projects_text = resume.projects or ""
     proj_flagged = False
     for block in re.split(r"\n\n+", projects_text):
@@ -92,119 +84,119 @@ async def validate_resume(
             if l.strip() and l.strip().startswith("- ")
         ]
         bc = len(bullet_lines)
-        if bc != 3 and bc > 0:   # only flag if bullets exist but count is wrong
+        if bc > 0 and bc != fmt.project_bullets:
             issues.append(ValidationIssue(
                 category="length",
-                description=f"A project has {bc} bullet points. Must have exactly 3.",
+                description=(
+                    f"A project has {bc} bullet points. "
+                    f"Format requires exactly {fmt.project_bullets}."
+                ),
                 suggestion=(
-                    "Write exactly 3 bullet points per project, each starting with '- '. "
-                    "Bullet 1: what you built. Bullet 2: tools/methods. Bullet 3: outcome or detail."
+                    f"Write exactly {fmt.project_bullets} bullet points per project, "
+                    "each starting with '- '."
                 ),
             ))
             proj_flagged = True
             break
-        # Word count guard: each bullet max 20 words
         for bl in bullet_lines:
-            words = len(bl[2:].split())   # strip the leading "- "
-            if words > 20:
+            if len(bl[2:].split()) > 20:
                 issues.append(ValidationIssue(
                     category="length",
-                    description=f"A project bullet is {words} words — too long (max 15 words).",
-                    suggestion="Shorten this bullet to under 15 words. Cut filler, keep the key action and tool.",
+                    description=f"A project bullet is too long (max 15 words).",
+                    suggestion="Shorten to under 15 words. Keep action verb and key tool.",
                 ))
                 proj_flagged = True
                 break
         if proj_flagged:
             break
 
-    # ── 6. Max 3 projects (default 2, 3rd only if JD-aligned) ───────────────
+    # ── 6. Project count — dynamic ────────────────────────────────────────────
     heading_count = sum(
         1 for line in projects_text.splitlines()
         if line.strip() and _is_heading_line(line.strip())
     )
-    if heading_count > 3:
+    if heading_count > fmt.max_projects:
         issues.append(ValidationIssue(
             category="length",
-            description=f"Projects section has {heading_count} projects. Maximum is 3.",
-            suggestion=(
-                "Keep only 2 or 3 projects. "
-                "The third project is only justified if it directly addresses a JD requirement "
-                "the first two do not cover. Remove any project that does not do this."
+            description=(
+                f"Projects section has {heading_count} projects. "
+                f"Format allows maximum {fmt.max_projects}."
             ),
+            suggestion=f"Remove the least relevant project. Keep at most {fmt.max_projects}.",
         ))
 
-    # ── 7. Experience: 4-5 bullet points PER ROLE ────────────────────────────
-    # Split on role heading lines, count "- " bullet lines per role.
-    exp_text = resume.experience or ""
-    exp_lines = exp_text.splitlines()
+    # ── 7. Experience bullet count per role — dynamic ─────────────────────────
+    exp_text  = resume.experience or ""
+    current_bullets: list[str] = []
+    exp_flagged = False
 
-    current_role_bullets: list[str] = []
-    exp_bullet_flagged = False
-    for line in exp_lines:
+    for line in exp_text.splitlines():
         stripped = line.strip()
         if not stripped:
             continue
         if _is_heading_line(stripped):
-            if current_role_bullets:
-                bc = len(current_role_bullets)
-                if bc < 4 or bc > 5:
+            if current_bullets:
+                bc = len(current_bullets)
+                if bc < fmt.exp_bullets_min or bc > fmt.exp_bullets_max:
                     issues.append(ValidationIssue(
                         category="length",
                         description=(
                             f"An experience role has {bc} bullet points. "
-                            "Must have 4 to 5 bullet points."
+                            f"Format requires {fmt.exp_bullets_min} to {fmt.exp_bullets_max}."
                         ),
                         suggestion=(
-                            "Write 4 to 5 bullet points each starting with '- ' and an action verb. "
-                            "Order by JD relevance. Each bullet max 15 words."
+                            f"Write {fmt.exp_bullets_min} to {fmt.exp_bullets_max} bullets "
+                            "each starting with '- ' and an action verb."
                         ),
                     ))
-                    exp_bullet_flagged = True
+                    exp_flagged = True
                     break
-            current_role_bullets = []
+            current_bullets = []
         elif stripped.startswith("- "):
-            current_role_bullets.append(stripped)
+            current_bullets.append(stripped)
 
-    # Check the last role block
-    if not exp_bullet_flagged and current_role_bullets:
-        bc = len(current_role_bullets)
-        if bc < 4 or bc > 5:
+    if not exp_flagged and current_bullets:
+        bc = len(current_bullets)
+        if bc < fmt.exp_bullets_min or bc > fmt.exp_bullets_max:
             issues.append(ValidationIssue(
                 category="length",
                 description=(
                     f"An experience role has {bc} bullet points. "
-                    "Must have 4 to 5 bullet points."
+                    f"Format requires {fmt.exp_bullets_min} to {fmt.exp_bullets_max}."
                 ),
                 suggestion=(
-                    "Write 4 to 5 bullet points each starting with '- ' and an action verb. "
-                    "Order by JD relevance. Each bullet max 15 words."
+                    f"Write {fmt.exp_bullets_min} to {fmt.exp_bullets_max} bullets "
+                    "each starting with '- ' and an action verb."
                 ),
             ))
         else:
-            for bl in current_role_bullets:
-                words = len(bl[2:].split())
-                if words > 20:
+            for bl in current_bullets:
+                if len(bl[2:].split()) > 20:
                     issues.append(ValidationIssue(
                         category="length",
-                        description=f"An experience bullet is {words} words — too long (max 15 words).",
-                        suggestion="Shorten to under 15 words. Keep action verb and key tool/outcome only.",
+                        description="An experience bullet is too long (max 15 words).",
+                        suggestion="Shorten to under 15 words.",
                     ))
                     break
-    # ── 8. Overall line count (rough 1-page proxy) ────────────────────────────
-    all_text = " ".join([
+
+    # ── 8. Overall length — dynamic page limit ────────────────────────────────
+    all_text   = " ".join([
         resume.summary or "", resume.skills or "", resume.experience or "",
         resume.projects or "", resume.education or "",
     ])
     line_count = all_text.count("\n")
-    if line_count > MAX_LINES_CUTOFF:
+    if line_count > fmt.max_lines:
         issues.append(ValidationIssue(
             category="length",
-            description=f"Resume is too long ({line_count} line breaks). Must fit 1 page.",
+            description=(
+                f"Resume is too long ({line_count} line breaks). "
+                f"Target: fits within {fmt.max_pages} page(s) "
+                f"(≈{fmt.max_lines} line breaks)."
+            ),
             suggestion=(
-                "Summary: 2 sentences. "
-                "Each project: 2 sentences. "
-                "Each experience role: 4 to 5 bullets starting with '- '. "
-                "Max 3 projects (3rd only if directly JD-aligned)."
+                f"Trim each section. Projects: {fmt.project_bullets} bullets. "
+                f"Experience: {fmt.exp_bullets_min}-{fmt.exp_bullets_max} bullets. "
+                f"Summary: {fmt.summary_sentences} sentences."
             ),
         ))
 
@@ -220,18 +212,13 @@ async def validate_resume(
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _is_heading_line(line: str) -> bool:
-    """
-    True if the line is a role or project heading, not body text.
-    Headings: contain ' | ', OR are short (<=70 chars) with no sentence punctuation
-    and don't start with 'I ' (which marks narrative body text).
-    """
     if not line:
         return False
     if " | " in line:
         return True
     if re.search(r"[.!?]$", line):
         return False
-    if line.startswith("I "):
+    if line.startswith("I ") or line.startswith("- "):
         return False
     return len(line) <= 70
 
@@ -239,7 +226,5 @@ def _is_heading_line(line: str) -> bool:
 def _build_correction(issues: list[ValidationIssue]) -> str:
     lines = ["Fix ALL of the following before the next attempt:"]
     for i, issue in enumerate(issues, 1):
-        lines.append(
-            f"{i}. [{issue.category.upper()}] {issue.description} — {issue.suggestion}"
-        )
+        lines.append(f"{i}. [{issue.category.upper()}] {issue.description} — {issue.suggestion}")
     return "\n".join(lines)

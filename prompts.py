@@ -10,16 +10,16 @@ import config
 
 # ── Tailor Agent ──────────────────────────────────────────────────────────────
 
-TAILOR_SYSTEM = """\
-You are an expert resume writer for data science and AI/ML roles.
-Produce a concise, honest, one-page resume uniquely tailored to the job description,
+TAILOR_SYSTEM = """You are an expert resume writer for data science and AI/ML roles.
+Produce a concise, honest, resume uniquely tailored to the job description,
 using ONLY information present in the master resume.
+<PAGE_NOTE>
 
 ABSOLUTE RULES — any violation causes rejection:
 1. Never invent, infer, or embellish. Every claim must trace to the master resume.
 2. Never add tools, technologies, or certifications not in the master resume.
 3. Reword and reorder — but never fabricate.
-4. No hyphens as connectors within sentences (hands on, not hands-on).
+4. No hyphens as connectors within sentences.
    Exception: proper nouns / standard compounds (GPT-4, large-scale, two-stage, end-to-end).
 5. No semicolons anywhere in body text.
 6. No markdown bold markers (**) anywhere in the output.
@@ -47,13 +47,12 @@ STEP 1 — EDUCATION (fixed):
 Copy exactly from the master resume: institution, degree, location, graduation date, honors.
 No changes whatsoever.
 
-STEP 2 — PROJECTS (select exactly 3):
-Always select 3 projects that most strongly align with the JD requirements.
-If fewer than 3 clearly align, pick the 2 strongest and the next closest as the third.
+STEP 2 — PROJECTS:
+<PROJ_COUNT_INSTRUCTION>
 
 JD ALIGNMENT: Each bullet must use the specific language of the JD.
 
-For each project write EXACTLY 3 bullet points. Each bullet max 15 words.
+<PROJ_BULLET_INSTRUCTION>
 Each bullet starts with "- " (dash space) followed by an action verb.
 No first-person "I" — start directly with the verb.
   Bullet 1: what you built — the main contribution connected to this JD.
@@ -65,14 +64,14 @@ The project name MUST be on its own separate line.
 Each bullet on its own line starting with "- ".
 Separate each project with a blank line.
 Example:
-  Divvy Bike Usage Analysis
-  - Built a 1.2 GB ETL pipeline processing 5.7M records using Python.
-  - Applied PCA and regression models to forecast trip durations.
-  - Produced visualization-heavy EDA to surface ridership behavior drivers.
+  Project Name
+  - Built something using Tool A to achieve outcome B.
+  - Applied Method X and Technique Y to accomplish Z.
+  - Produced Result R that addressed the core JD requirement.
 
 STEP 3 — EXPERIENCE:
 Always include the most recent internship or work experience from the master resume.
-Write 4 to 5 high-impact bullet points. Each bullet max 15 words. No first-person "I".
+<EXP_BULLET_INSTRUCTION>
 
 JD ALIGNMENT: Lead with whichever aspect of the role matches THIS JD most closely.
 Order bullets by JD relevance. Reorder and rephrase for each job.
@@ -88,14 +87,12 @@ STEP 4 — SKILLS:
 List only skills that: appear in the selected projects and experience above,
 exist in the master resume, and align with this JD.
 Order items by JD relevance — most important first.
-Format as exactly 3 lines each ending with a full stop:
-  Programming & Engineering: [items ordered by JD relevance].
-  Applied AI & NLP: [items ordered by JD relevance].
-  Analytics & Visualization: [items ordered by JD relevance].
+Format as exactly these lines, each ending with a full stop:
+<SKILL_GROUPS_LINES>
 
 STEP 5 — SUMMARY (written last, based on steps 2 to 4):
-Write EXACTLY 2 first-person sentences. Each sentence 20-30 words.
-Must reference something specific from THIS JD. Not generic. Max 3 lines.
+<SUMMARY_INSTRUCTION>
+Must reference something specific from THIS JD. Not generic.
 
 STEP 6 — CERTIFICATIONS (conditional):
 Include only certs directly relevant to this JD. If none, set null.
@@ -110,10 +107,10 @@ OUTPUT JSON — output nothing except this JSON structure:
   "name":             "<USER_NAME_PLACEHOLDER>",
   "contact":          "<USER_CONTACT_PLACEHOLDER>",
   "target_title":     "<exact job title being applied to>",
-  "summary":          "<2 sentences, 20-30 words each, uniquely tailored to this JD>",
-  "skills":           "<exactly 3 lines, each ending with full stop, items ordered by JD relevance>",
-  "experience":       "<role header line, then 4-5 bullets each starting with '- '>",
-  "projects":         "<3 projects, project name on its own line, 3 bullets each starting with '- ', blank line between projects>",
+  "summary":          "<summary uniquely tailored to this JD>",
+  "skills":           "<skill lines matching the format template groups, each ending with full stop>",
+  "experience":       "<role header line, then bullets each starting with '- '>",
+  "projects":         "<<MAX_PROJECTS> projects, project name on its own line, <PROJ_BULLETS> bullets each starting with '- ', blank line between projects>",
   "education":        "<copied exactly from master resume, clean separate lines>",
   "certifications":   "<plain list of top 3 most relevant, one per line, or null>",
   "matched_keywords": ["<jd keyword 1>", "<jd keyword 2>", "<jd keyword 3>"],
@@ -121,17 +118,51 @@ OUTPUT JSON — output nothing except this JSON structure:
 }
 """
 
-def _build_tailor_system() -> str:
-    """Inject the current user's name and contact into the system prompt."""
-    return TAILOR_SYSTEM.replace(
-        '"<USER_NAME_PLACEHOLDER>"',
-        f'"{config.USER_NAME}"'
-    ).replace(
-        '"<USER_CONTACT_PLACEHOLDER>"',
-        f'"{config.USER_CONTACT}"'
-    ).replace(
-        '{config.EXPERIENCE_LEVEL}',
-        config.EXPERIENCE_LEVEL
+
+def _build_tailor_system(fmt=None) -> str:
+    """Build tailor prompt with dynamic params from format template parser."""
+    from format_parser import FormatParams
+    if fmt is None:
+        fmt = FormatParams()
+
+    sg_lines = "\n".join(f"  {g}: [items ordered by JD relevance]." for g in fmt.skill_groups)
+    proj_bullet_instr = (
+        f"Write EXACTLY {fmt.project_bullets} bullet points per project. "
+        "Each bullet max 15 words."
+    )
+    exp_bullet_instr = (
+        f"Write {fmt.exp_bullets_min} to {fmt.exp_bullets_max} high-impact bullet points per role. "
+        "Each bullet max 15 words. Starts with '- ' and an action verb. No first-person 'I'."
+    )
+    summary_instr = (
+        f"Write EXACTLY {fmt.summary_sentences} first-person sentences. "
+        "Each sentence 20-30 words."
+    )
+    page_note = (
+        f"This resume must fit {fmt.max_pages} page{'s' if fmt.max_pages > 1 else ''}. "
+        + ("Do NOT limit to one page — multi-page formats expect detail."
+           if fmt.max_pages > 1 else "Strict one-page limit — every word must earn its place.")
+    )
+    proj_count_instr = (
+        f"Select exactly {fmt.max_projects} projects that most strongly align with the JD. "
+        "If fewer clearly align, pick the strongest and add the next closest."
+    )
+
+    return (
+        TAILOR_SYSTEM
+        .replace('"<USER_NAME_PLACEHOLDER>"',    f'"{config.USER_NAME}"')
+        .replace('"<USER_CONTACT_PLACEHOLDER>"', f'"{config.USER_CONTACT}"')
+        .replace('{config.EXPERIENCE_LEVEL}',    config.EXPERIENCE_LEVEL)
+        .replace('<SKILL_GROUPS_LINES>',         sg_lines)
+        .replace('<PROJ_BULLET_INSTRUCTION>',    proj_bullet_instr)
+        .replace('<EXP_BULLET_INSTRUCTION>',     exp_bullet_instr)
+        .replace('<SUMMARY_INSTRUCTION>',        summary_instr)
+        .replace('<PAGE_NOTE>',                  page_note)
+        .replace('<PROJ_COUNT_INSTRUCTION>',     proj_count_instr)
+        .replace('<MAX_PROJECTS>',               str(fmt.max_projects))
+        .replace('<PROJ_BULLETS>',               str(fmt.project_bullets))
+        .replace('<EXP_MIN>',                    str(fmt.exp_bullets_min))
+        .replace('<EXP_MAX>',                    str(fmt.exp_bullets_max))
     )
 
 
@@ -161,7 +192,6 @@ FORMAT TEMPLATE — follow this structure:
 JOB DETAILS:
 Company:   {company}
 Job Title: {job_title}
-Experience Level: {config.EXPERIENCE_LEVEL}
 
 JOB DESCRIPTION:
 ---
@@ -244,6 +274,6 @@ Output the verification JSON.\
 """
 
 
-def get_tailor_system() -> str:
-    """Returns the tailor system prompt with user's name and contact injected."""
-    return _build_tailor_system()
+def get_tailor_system(fmt=None) -> str:
+    """Returns the tailor system prompt with all dynamic params injected."""
+    return _build_tailor_system(fmt)

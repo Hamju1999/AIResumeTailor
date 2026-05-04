@@ -85,14 +85,14 @@ async def main() -> None:
 
     # ── Dry run: scrape + print job list ─────────────────────────────────────
     if args.dry_run:
-        log.info("[yellow]DRY RUN - scraping only, no LLM calls[/yellow]")
+        log.info("[yellow]DRY RUN — scraping only, no LLM calls[/yellow]")
         import scraper
         jobs = await scraper.discover_jobs()
         if args.limit:
             jobs = jobs[: args.limit]
         log.info(f"Found {len(jobs)} jobs:")
         for j in jobs:
-            log.info(f"  [{j.board}] {j.title} @ {j.company} - {j.job_url}")
+            log.info(f"  [{j.board}] {j.title} @ {j.company} — {j.job_url}")
         return
 
     # ── Full pipeline run ─────────────────────────────────────────────────────
@@ -129,7 +129,7 @@ async def main() -> None:
     if manifest.failures:
         log.info("\nFailed jobs:")
         for f in manifest.failures:
-            log.info(f"  ❌  {f.job.title} @ {f.job.company} - {f.reason}")
+            log.info(f"  ❌  {f.job.title} @ {f.job.company} — {f.reason}")
 
 
 if __name__ == "__main__":

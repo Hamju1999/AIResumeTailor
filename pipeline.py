@@ -25,6 +25,8 @@ from models import (
     FailedJob, Job, JobResult, JobStatus, PipelineRun, TailoredResume,
 )
 from resume_builder import build_docx
+import format_parser
+from format_parser import FormatParams
 from grammar_fixer import fix_grammar
 from calibrator import calibrate
 
@@ -37,7 +39,7 @@ _run_id:          str = ""   # set once in run(), read everywhere
 
 # ── Content loading ───────────────────────────────────────────────────────────
 
-def load_content() -> None:
+async def load_content() -> None:
     global _master_resume, _format_template
 
     for attr, path in [("_master_resume", config.MASTER_RESUME_PATH),
@@ -49,6 +51,9 @@ def load_content() -> None:
 
     log.info(f"Master resume loaded ({len(_master_resume):,} chars)")
     log.info(f"Format template loaded ({len(_format_template):,} chars)")
+    # Parse format template to extract dynamic parameters
+    global _format_params
+    _format_params = await format_parser.parse(_format_template)
 
 
 def _load_file(p: Path) -> str:
@@ -62,7 +67,7 @@ def _load_file(p: Path) -> str:
 
 async def run() -> PipelineRun:
     global _run_id
-    load_content()
+    await load_content()
 
     _run_id = uuid.uuid4().hex[:8]
     started = datetime.utcnow()
@@ -129,6 +134,7 @@ async def _process_job(job: Job) -> JobResult | FailedJob:
                 master_resume=_master_resume,
                 format_template=_format_template,
                 correction_notes=correction_notes,
+                fmt=_format_params,
             )
 
             # Auto-fix hyphens and semicolons before any validation.
@@ -165,7 +171,7 @@ async def _process_job(job: Job) -> JobResult | FailedJob:
 
             # Phase 5 — Validate (on calibrated output)
             last_status = JobStatus.VALIDATING
-            val = await validator.validate_resume(resume, _format_template)
+            val = await validator.validate_resume(resume, _format_template, _format_params)
             if not val.passed:
                 correction_notes = _merge(correction_notes, val.correction_prompt)
                 if attempt <= config.MAX_RETRIES:
