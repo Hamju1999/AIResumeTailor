@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ResTail — Setup</title>
+<style>
+  :root {
+    --bg: #0C0F18; --surface: #131620; --surface2: #1A1E2E;
+    --border: #252A3D; --accent: #4A7CFF; --accent2: #7B5CF7;
+    --success: #22C55E; --danger: #EF4444; --text: #E2E8F0;
+    --muted: #64748B; --radius: 10px; --sans: 'Segoe UI', system-ui, sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans);
+         font-size: 14px; min-height: 100vh; padding: 40px 20px; }
+  .container { max-width: 720px; margin: 0 auto; }
+  .logo { font-size: 28px; font-weight: 800; letter-spacing: 4px;
+          background: linear-gradient(135deg, var(--accent), var(--accent2));
+          -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+          background-clip: text; margin-bottom: 6px; }
+  .subtitle { color: var(--muted); margin-bottom: 32px; font-size: 13px; }
+  .card { background: var(--surface); border: 1px solid var(--border);
+          border-radius: var(--radius); padding: 24px; margin-bottom: 20px; }
+  .card-title { font-size: 11px; font-weight: 700; text-transform: uppercase;
+                letter-spacing: 1px; color: var(--muted); margin-bottom: 16px; }
+  label { font-size: 12px; color: var(--muted); display: block;
+          margin-bottom: 5px; font-weight: 600; }
+  input[type=text], input[type=password], textarea {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-family: monospace; font-size: 12px;
+    padding: 9px 13px; outline: none; transition: border-color .15s; }
+  input:focus, textarea:focus { border-color: var(--accent); }
+  textarea { resize: vertical; }
+  .field { margin-bottom: 14px; }
+  .hint { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .file-area { border: 2px dashed var(--border); border-radius: 8px;
+               padding: 20px; text-align: center; cursor: pointer;
+               transition: border-color .15s; position: relative; }
+  .file-area:hover, .file-area.over { border-color: var(--accent); }
+  .file-area input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .file-label { font-size: 13px; color: var(--muted); }
+  .file-label strong { color: var(--accent); }
+  .file-name { margin-top: 6px; font-size: 11px; color: var(--success); display: none; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 11px 24px;
+         border: none; border-radius: 8px; font-size: 14px; font-weight: 700;
+         cursor: pointer; transition: all .15s; font-family: var(--sans); width: 100%;
+         justify-content: center; margin-top: 8px; }
+  .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; }
+  .btn-primary:hover { opacity: .88; }
+  .btn-primary:disabled { opacity: .4; cursor: not-allowed; }
+  .alert { border-radius: 8px; padding: 12px 16px; font-size: 13px; margin-bottom: 16px; }
+  .alert-error { background: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.3); color: #FCA5A5; }
+  .alert-success { background: rgba(34,197,94,.12); border: 1px solid rgba(34,197,94,.3); color: #86EFAC; }
+  .section-note { background: rgba(74,124,255,.08); border: 1px solid rgba(74,124,255,.2);
+                  border-radius: 8px; padding: 12px 16px; font-size: 12px; color: #93C5FD;
+                  margin-bottom: 16px; line-height: 1.6; }
+  .required { color: var(--danger); }
+  hr { border: none; border-top: 1px solid var(--border); margin: 4px 0 16px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="logo">RESTAIL</div>
+  <div class="subtitle">One-time setup — your config is saved locally and never uploaded anywhere.</div>
+
+  <div id="alertBox"></div>
+
+  <form id="setupForm" enctype="multipart/form-data">
+
+    <!-- PERSONAL INFO -->
+    <div class="card">
+      <div class="card-title">Personal Information <span class="required">*</span></div>
+      <div class="row">
+        <div class="field">
+          <label>Full Name <span class="required">*</span></label>
+          <input type="text" name="full_name" placeholder="John Smith"
+                 value="{{ existing.get('full_name', '') }}" required>
+        </div>
+        <div class="field">
+          <label>City &amp; State</label>
+          <input type="text" name="city_state" placeholder="Chicago, IL"
+                 value="{{ existing.get('city_state', '') }}">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Phone</label>
+          <input type="text" name="phone" placeholder="773-555-0100"
+                 value="{{ existing.get('phone', '') }}">
+        </div>
+        <div class="field">
+          <label>Email</label>
+          <input type="text" name="email" placeholder="you@email.com"
+                 value="{{ existing.get('email', '') }}">
+        </div>
+      </div>
+      <div class="hint" style="margin-bottom:10px">Contact line preview: <span id="contactPreview" style="color:var(--accent);font-family:monospace"></span></div>
+    </div>
+
+    <!-- PROFILE LINKS -->
+    <div class="card">
+      <div class="card-title">Profile Links (for hyperlinks in resume)</div>
+      <div class="field">
+        <label>LinkedIn URL</label>
+        <input type="text" name="linkedin_url" placeholder="https://www.linkedin.com/in/yourname"
+               value="{{ existing.get('linkedin_url', '') }}">
+      </div>
+      <div class="field">
+        <label>GitHub URL</label>
+        <input type="text" name="github_url" placeholder="https://github.com/yourusername"
+               value="{{ existing.get('github_url', '') }}">
+      </div>
+      <div class="field">
+        <label>Portfolio URL (optional)</label>
+        <input type="text" name="portfolio_url" placeholder="https://yourportfolio.com"
+               value="{{ existing.get('portfolio_url', '') }}">
+      </div>
+    </div>
+
+    <!-- FILES -->
+    <div class="card">
+      <div class="card-title">Resume &amp; Template Files <span class="required">*</span></div>
+      <div class="section-note">
+        <strong>Master Resume</strong> — your complete professional record (all jobs, projects, skills, education, certifications). The AI only uses content from this file — nothing is invented.<br><br>
+        <strong>Format Template</strong> — describes the 1-page resume layout. A plain text description of how sections should be ordered and formatted.
+      </div>
+
+      <div class="field">
+        <label>Master Resume <span class="required">*</span> (.txt or .pdf with text layer)</label>
+        <div class="file-area" id="masterArea">
+          <input type="file" name="master_resume" accept=".txt,.pdf" id="masterFile"
+                 onchange="showFileName(this,'masterName')">
+          <div class="file-label">Drag &amp; drop or <strong>click to browse</strong></div>
+          <div class="file-name" id="masterName"></div>
+        </div>
+        {% if existing.get('master_resume_path') %}
+        <div class="hint">Currently: {{ existing.get('master_resume_path','').split('/')[-1].split('\\')[-1] }} — leave empty to keep.</div>
+        {% endif %}
+      </div>
+
+      <div class="field">
+        <label>Format Template <span class="required">*</span> (.txt or .pdf with text layer)</label>
+        <div class="file-area" id="fmtArea">
+          <input type="file" name="format_template" accept=".txt,.pdf" id="fmtFile"
+                 onchange="showFileName(this,'fmtName')">
+          <div class="file-label">Drag &amp; drop or <strong>click to browse</strong></div>
+          <div class="file-name" id="fmtName"></div>
+        </div>
+        {% if existing.get('format_template_path') %}
+        <div class="hint">Currently: {{ existing.get('format_template_path','').split('/')[-1].split('\\')[-1] }} — leave empty to keep.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- JOB SEARCH -->
+    <div class="card">
+      <div class="card-title">Job Search Preferences <span class="required">*</span></div>
+      <div class="field">
+        <label>Location priorities — one per line, searched in order from top <span class="required">*</span></label>
+        <textarea name="locations" rows="6" placeholder="Chicago, Illinois&#10;New York, New York&#10;San Francisco, California&#10;Austin, Texas&#10;Seattle, Washington">{{ '\n'.join(existing.get('locations', ['Chicago, Illinois','New York, New York','San Francisco, California','Austin, Texas','Seattle, Washington'])) }}</textarea>
+        <div class="hint">First location is searched first. If not enough results, expands to next location.</div>
+      </div>
+      <div class="field">
+        <label>Job titles to search — one per line <span class="required">*</span></label>
+        <textarea name="job_titles" rows="6" placeholder="Data Scientist&#10;Machine Learning Engineer&#10;AI Engineer&#10;Data Analyst&#10;Data Engineer">{{ '\n'.join(existing.get('job_titles', ['Data Scientist','Machine Learning Engineer','AI Engineer','Data Analyst','Data Engineer'])) }}</textarea>
+        <div class="hint">The pipeline searches all boards for each title listed here.</div>
+      </div>
+    </div>
+
+    <!-- API KEY -->
+    <div class="card">
+      <div class="card-title">Anthropic API Key <span class="required">*</span></div>
+      <div class="field">
+        <label>API Key (stored locally only, never shared)</label>
+        <input type="password" name="anthropic_api_key" placeholder="sk-ant-..."
+               value="{{ existing.get('anthropic_api_key', '') }}">
+        <div class="hint">Get your key at console.anthropic.com → API Keys. The pipeline uses Claude claude-sonnet-4-6.</div>
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary" id="submitBtn">
+      Save Configuration &amp; Start
+    </button>
+  </form>
+</div>
+
+<script>
+// Contact line preview
+function updatePreview() {
+  const name = document.querySelector('[name=full_name]').value.trim();
+  const city = document.querySelector('[name=city_state]').value.trim();
+  const phone = document.querySelector('[name=phone]').value.trim();
+  const email = document.querySelector('[name=email]').value.trim();
+  const li = document.querySelector('[name=linkedin_url]').value.trim();
+  const gh = document.querySelector('[name=github_url]').value.trim();
+  const po = document.querySelector('[name=portfolio_url]').value.trim();
+  const parts = [city, phone, email];
+  if (li) parts.push('LinkedIn');
+  if (gh) parts.push('GitHub');
+  if (po) parts.push('Portfolio');
+  document.getElementById('contactPreview').textContent = parts.filter(Boolean).join(' | ');
+}
+document.querySelectorAll('input[type=text], input[type=password]').forEach(el =>
+  el.addEventListener('input', updatePreview));
+updatePreview();
+
+function showFileName(input, labelId) {
+  const label = document.getElementById(labelId);
+  if (input.files[0]) {
+    label.textContent = '✓ ' + input.files[0].name;
+    label.style.display = 'block';
+  }
+}
+
+// Drag and drop styling
+['masterArea','fmtArea'].forEach(id => {
+  const area = document.getElementById(id);
+  area.addEventListener('dragover', e => { e.preventDefault(); area.classList.add('over'); });
+  area.addEventListener('dragleave', () => area.classList.remove('over'));
+  area.addEventListener('drop', e => { e.preventDefault(); area.classList.remove('over'); });
+});
+
+// Form submit
+document.getElementById('setupForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Saving...';
+
+  // Build contact line from fields
+  const city  = document.querySelector('[name=city_state]').value.trim();
+  const phone = document.querySelector('[name=phone]').value.trim();
+  const email = document.querySelector('[name=email]').value.trim();
+  const li    = document.querySelector('[name=linkedin_url]').value.trim();
+  const gh    = document.querySelector('[name=github_url]').value.trim();
+  const po    = document.querySelector('[name=portfolio_url]').value.trim();
+  const parts = [city, phone, email];
+  if (li) parts.push('LinkedIn');
+  if (gh) parts.push('GitHub');
+  if (po) parts.push('Portfolio');
+  const contactLine = parts.filter(Boolean).join(' | ');
+
+  const fd = new FormData(e.target);
+  fd.set('contact_line', contactLine);
+
+  const alertBox = document.getElementById('alertBox');
+
+  try {
+    const res = await fetch('/api/setup', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.error) {
+      alertBox.innerHTML = `<div class="alert alert-error">${data.error}</div>`;
+      btn.disabled = false;
+      btn.textContent = 'Save Configuration & Start';
+    } else {
+      alertBox.innerHTML = '<div class="alert alert-success">✓ Setup complete! Redirecting to the pipeline…</div>';
+      setTimeout(() => window.location.href = '/', 1200);
+    }
+  } catch (err) {
+    alertBox.innerHTML = `<div class="alert alert-error">Unexpected error: ${err.message}</div>`;
+    btn.disabled = false;
+    btn.textContent = 'Save Configuration & Start';
+  }
+});
+</script>
+</body>
+</html>

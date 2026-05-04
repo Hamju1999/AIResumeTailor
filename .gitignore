@@ -1,0 +1,31 @@
+# Personal config — never commit this
+user_config.json
+
+# Uploaded resume files
+master_resume.txt
+master_resume.pdf
+format_template.txt
+format_template.pdf
+
+# Pipeline output
+output/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# Environment
+.env
+.venv
+venv/
+env/
+
+# OS
+.DS_Store
+Thumbs.db
