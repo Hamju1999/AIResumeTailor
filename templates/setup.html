@@ -167,6 +167,15 @@
         <textarea name="job_titles" rows="6" placeholder="Data Scientist&#10;Machine Learning Engineer&#10;AI Engineer&#10;Data Analyst&#10;Data Engineer">{{ '\n'.join(existing.get('job_titles', ['Data Scientist','Machine Learning Engineer','AI Engineer','Data Analyst','Data Engineer'])) }}</textarea>
         <div class="hint">The pipeline searches all boards for each title listed here.</div>
       </div>
+      <div class="field">
+        <label>Experience level to target <span class="required">*</span></label>
+        <select name="experience_level" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:9px 13px;outline:none;">
+          <option value="entry"  {% if existing.get('experience_level','entry') == 'entry'  %}selected{% endif %}>Entry level / Internship / Graduate</option>
+          <option value="mid"    {% if existing.get('experience_level','entry') == 'mid'    %}selected{% endif %}>Mid level (2–5 years)</option>
+          <option value="senior" {% if existing.get('experience_level','entry') == 'senior' %}selected{% endif %}>Senior (5+ years)</option>
+        </select>
+        <div class="hint">Controls which jobs are scraped and how the resume is framed.</div>
+      </div>
     </div>
 
     <!-- API KEY -->
