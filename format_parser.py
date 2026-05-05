@@ -40,6 +40,7 @@ class FormatParams:
                                        "Applied AI & NLP",
                                        "Analytics & Visualization",
                                    ])
+    skill_groups_fixed: bool = True
     max_projects:      int        = 3
     project_bullets:   int        = 3
     exp_bullets_min:   int        = 4
@@ -145,6 +146,7 @@ def _build_params(data: dict) -> FormatParams:
                                 "Applied AI & NLP",
                                 "Analytics & Visualization",
                             ],
+        skill_groups_fixed = bool(data.get("skill_groups")),
         max_projects      = int(data.get("max_projects") or 3),
         project_bullets   = int(data.get("project_bullets") or 3),
         exp_bullets_min   = int(data.get("exp_bullets_min") or 4),
@@ -193,6 +195,7 @@ def _infer_from_text(text: str) -> FormatParams:
         ]
     # Cap at 5 groups
     skill_groups = skill_groups[:5]
+    skill_groups_fixed = len(skill_groups) >= 2
 
     # Project count
     max_projects = 3
@@ -204,6 +207,7 @@ def _infer_from_text(text: str) -> FormatParams:
         max_pages         = max_pages,
         max_lines         = _PAGE_LINES.get(max_pages, 65),
         skill_groups      = skill_groups,
+        skill_groups_fixed = skill_groups_fixed,
         max_projects      = max_projects,
         project_bullets   = 3,
         exp_bullets_min   = 4,
