@@ -1,5 +1,5 @@
 """
-Pipeline Orchestrator — fixed:
+Pipeline Orchestrator - fixed:
   1. run_id properly shared so resume paths are correct
   2. Sequential job processing (semaphore=1) to respect 30k tokens/min rate limit
   3. Inter-job delay between LLM calls
@@ -78,7 +78,7 @@ async def run() -> PipelineRun:
     jobs: list[Job] = await scraper.discover_jobs()
     log.info(f"Processing {len(jobs)} jobs through Phases 3-5 ...")
 
-    # Phase 3-5: SEQUENTIAL — one job at a time to respect 30k tokens/min limit.
+    # Phase 3-5: SEQUENTIAL - one job at a time to respect 30k tokens/min limit.
     # Each job makes 3 LLM calls × ~10k tokens = ~30k tokens. Running in parallel
     # blows the rate limit immediately. Sequential with a small inter-job pause
     # keeps us under the limit without throttling retries.
@@ -127,7 +127,7 @@ async def _process_job(job: Job) -> JobResult | FailedJob:
 
     for attempt in range(1, config.MAX_RETRIES + 2):
         try:
-            # Phase 3 — Tailor
+            # Phase 3 - Tailor
             last_status = JobStatus.TAILORING
             resume: TailoredResume = await tailor.tailor_resume(
                 job=job,
@@ -140,16 +140,16 @@ async def _process_job(job: Job) -> JobResult | FailedJob:
             # Auto-fix hyphens and semicolons before any validation.
             resume = _sanitize_resume(resume)
 
-            # Grammar fix — corrects punctuation and commas.
+            # Grammar fix - corrects punctuation and commas.
             await asyncio.sleep(config.INTER_AGENT_DELAY_SEC)
             resume = await fix_grammar(resume)
             log.debug("Grammar fix applied")
 
             await asyncio.sleep(config.INTER_AGENT_DELAY_SEC)
 
-            # Phase 4 — Verify (MUST run before calibration).
+            # Phase 4 - Verify (MUST run before calibration).
             # Calibration rewrites wording; if it runs first, calibrated phrasing
-            # gets flagged as fabrication — causing issue counts to grow on retry.
+            # gets flagged as fabrication - causing issue counts to grow on retry.
             last_status = JobStatus.VERIFYING
             ver = await verifier.verify_resume(resume, _master_resume, job.description)
             if not ver.passed:
@@ -163,13 +163,13 @@ async def _process_job(job: Job) -> JobResult | FailedJob:
                     reason="Verification failed: " + "; ".join(i.claim for i in ver.issues[:2]),
                 )
 
-            # Calibration runs AFTER verification — tone/abstraction fix on verified content.
+            # Calibration runs AFTER verification - tone/abstraction fix on verified content.
             await asyncio.sleep(config.INTER_AGENT_DELAY_SEC)
             resume = await calibrate(resume, job_description=job.description)
 
             await asyncio.sleep(config.INTER_AGENT_DELAY_SEC)
 
-            # Phase 5 — Validate (on calibrated output)
+            # Phase 5 - Validate (on calibrated output)
             last_status = JobStatus.VALIDATING
             val = await validator.validate_resume(resume, _format_template, _format_params)
             if not val.passed:
@@ -183,7 +183,7 @@ async def _process_job(job: Job) -> JobResult | FailedJob:
                     reason="Validation failed: " + "; ".join(i.description[:80] for i in val.issues[:2]),
                 )
 
-            # All passed — build docx
+            # All passed - build docx
             resume_path = _resume_path(job)
             build_docx(resume, resume_path)
 
@@ -240,7 +240,7 @@ def _save_outputs(manifest: PipelineRun) -> None:
     # 3. Markdown index
     index_path = config.OUTPUT_DIR / f"index_{manifest.run_id}.md"
     lines = [
-        f"# Job-Resume Pairs — Run {manifest.run_id}",
+        f"# Job-Resume Pairs - Run {manifest.run_id}",
         f"Generated: {manifest.finished_at.strftime('%Y-%m-%d %H:%M UTC')}",
         f"**{manifest.total_passed} resumes ready  |  {manifest.total_failed} failed**\n",
         "---\n", "## ✅ Passed\n",
@@ -254,11 +254,11 @@ def _save_outputs(manifest: PipelineRun) -> None:
     if manifest.failures:
         lines += ["\n---\n", "## ❌ Failed\n"]
         for f_ in manifest.failures:
-            lines.append(f"- **{f_.job.title}** @ {f_.job.company} — {f_.reason}\n")
+            lines.append(f"- **{f_.job.title}** @ {f_.job.company} - {f_.reason}\n")
     index_path.write_text("\n".join(lines), encoding="utf-8")
     log.info(f"Index → {index_path}")
 
-    # 4. Resumes zip — .docx only (PDF removed)
+    # 4. Resumes zip - .docx only (PDF removed)
     zip_path = config.OUTPUT_DIR / f"resumes_{manifest.run_id}.zip"
     docx_files = list(resume_dir.glob("*.docx")) if resume_dir.exists() else []
     if docx_files:
@@ -267,13 +267,13 @@ def _save_outputs(manifest: PipelineRun) -> None:
                 zf.write(f, f.name)
         log.info(f"Resumes zip ({len(docx_files)} docx) → {zip_path}")
     else:
-        log.warning(f"No .docx files in {resume_dir} — nothing to zip.")
+        log.warning(f"No .docx files in {resume_dir} - nothing to zip.")
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _resume_path(job: Job) -> Path:
-    """Save inside output/resumes/<run_id>/ — consistent with zip lookup."""
+    """Save inside output/resumes/<run_id>/  consistent with zip lookup."""
     safe = lambda s, n: "".join(c if c.isalnum() else "_" for c in s)[:n]
     filename = f"{safe(job.company, 30)}_{safe(job.title, 25)}_{job.job_id}.docx"
     path = config.RESUME_DIR / _run_id / filename
@@ -313,7 +313,7 @@ def _sanitize_resume(resume: TailoredResume) -> TailoredResume:
     return TailoredResume(**data)
 
 
-# Compound adjectives whose hyphens are grammatically correct — keep them
+# Compound adjectives whose hyphens are grammatically correct - keep them
 _KEEP_HYPHENATED = {
     "end-to-end", "large-scale", "small-scale", "two-stage", "multi-stage",
     "real-time", "state-of-the-art", "high-fidelity", "high-performance",
