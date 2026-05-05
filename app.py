@@ -244,6 +244,69 @@ def api_download(run_id: str, file_type: str):
         return "File not found", 404
     return send_file(str(path), as_attachment=True)
 
+@app.route("/api/ats-score/<run_id>/<job_id>")
+def api_ats_score(run_id: str, job_id: str):
+    """
+    Keyword-based ATS score: checks how many JD keywords appear in the resume.
+    Returns score 0-100, matched keywords, and missing keywords.
+    """
+    import re
+    from pathlib import Path
+
+    # Load the manifest to get JD and matched_keywords for this job
+    manifest_path = config.OUTPUT_DIR / f"manifest_{run_id}.json"
+    if not manifest_path.exists():
+        return jsonify({"error": "Run not found"}), 404
+
+    manifest = json.loads(manifest_path.read_text())
+    
+    # Find the specific job result
+    job_result = next(
+        (r for r in manifest.get("results", []) if r.get("job", {}).get("job_id") == job_id),
+        None
+    )
+    if not job_result:
+        return jsonify({"error": "Job not found"}), 404
+
+    # Load the .docx text
+    resume_path = Path(job_result.get("resume_path", ""))
+    if not resume_path.exists():
+        return jsonify({"error": "Resume file not found"}), 404
+
+    try:
+        from docx import Document
+        doc = Document(str(resume_path))
+        resume_text = " ".join(p.text for p in doc.paragraphs).lower()
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    # Get JD keywords — use matched_keywords from the tailor plus extract from JD
+    jd_text = job_result.get("job", {}).get("description", "")
+    matched_kw = job_result.get("resume", {}).get("matched_keywords", [])
+    
+    # Extract important terms from JD (nouns and technical terms, 2+ chars)
+    # Simple approach: find words that appear in JD but check presence in resume
+    stop_words = {"the","and","for","with","this","that","from","are","has",
+                  "have","will","you","our","we","be","to","of","in","a","an",
+                  "is","it","at","by","or","as","on","your","their","can","may"}
+    
+    jd_words = set(re.findall(r'\b[a-zA-Z][a-zA-Z+#.]{2,}\b', jd_text.lower()))
+    jd_words -= stop_words
+    
+    # Score: check matched_keywords first (highest signal), then JD terms
+    all_keywords = list(dict.fromkeys(matched_kw + list(jd_words)))[:40]  # top 40
+    
+    found = [kw for kw in all_keywords if kw.lower() in resume_text]
+    missing = [kw for kw in matched_kw if kw.lower() not in resume_text]  # only matched_kw for missing
+    
+    score = round(len(found) / len(all_keywords) * 100) if all_keywords else 0
+    
+    return jsonify({
+        "score": score,
+        "found": found[:20],
+        "missing": missing[:10],
+        "total_checked": len(all_keywords),
+    })
 
 @app.route("/api/history")
 def api_history():
