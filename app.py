@@ -132,13 +132,13 @@ def api_setup():
         if not fmt_path or not Path(fmt_path).exists():
             return jsonify({"error": "Format template file is required."}), 400
 
-        # Locations — one per line, filter empty
+        # Locations - one per line, filter empty
         locations_raw = form.get("locations", "")
         locations = [l.strip() for l in locations_raw.splitlines() if l.strip()]
         if not locations:
             return jsonify({"error": "At least one location is required."}), 400
 
-        # Job titles — one per line
+        # Job titles - one per line
         titles_raw = form.get("job_titles", "")
         job_titles = [t.strip() for t in titles_raw.splitlines() if t.strip()]
         if not job_titles:
@@ -331,7 +331,7 @@ def _run_pipeline(custom_urls: list[str], limit: int, paste_jd: str = "", paste_
     log = logging.getLogger("ui.runner")
     try:
         if paste_jd:
-            log.info(f"Mode: pasted JD — {paste_title} @ {paste_company}")
+            log.info(f"Mode: pasted JD - {paste_title} @ {paste_company}")
             manifest = asyncio.run(_run_paste_jd(paste_jd, paste_title, paste_company))
         elif custom_urls:
             log.info(f"Mode: custom URLs ({len(custom_urls)} links provided)")
@@ -457,7 +457,7 @@ async def _run_custom_urls(urls: list[str]):
     return manifest
 
 async def _run_paste_jd(jd_text: str, title: str, company: str):
-    """Skip scraping and URL fetching — build a Job directly from pasted text."""
+    """Skip scraping and URL fetching - build a Job directly from pasted text."""
     import hashlib
     import pipeline as pl
     from models import Job
