@@ -98,7 +98,7 @@ List only skills that: appear in the selected projects and experience above,
 exist in the master resume, and align with this JD.
 Order items by JD relevance — most important first.
 Format as exactly these lines, each ending with a full stop:
-<SKILL_GROUPS_INSTRUCTIONS>
+<SKILL_GROUPS_INSTRUCTION>
 
 STEP 5 — SUMMARY (written last, based on steps 2 to 4):
 <SUMMARY_INSTRUCTION>
