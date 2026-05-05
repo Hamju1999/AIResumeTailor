@@ -1,5 +1,5 @@
 """
-Resume builder — .docx renderer.
+Resume builder - .docx renderer.
 
 Sizing & formatting (per final spec):
   NAME:          bold, 16pt, centered
@@ -40,9 +40,9 @@ log = logging.getLogger("resume_builder")
 # ── Design tokens ──────────────────────────────────────────────────────────────
 FONT_NAME        = "Calibri"
 NAME_SIZE        = 16       # bold
-SECTION_SIZE     = 14       # bold — all section headings equal
-SUBHEADING_SIZE  = 12       # bold — role titles, project titles, skill labels
-BODY_SIZE        = 11       # not bold — all body text equal
+SECTION_SIZE     = 14       # bold - all section headings equal
+SUBHEADING_SIZE  = 12       # bold - role titles, project titles, skill labels
+BODY_SIZE        = 11       # not bold - all body text equal
 CONTACT_SIZE     = 10       # not bold
 MARGIN_IN        = 0.55
 BLACK            = RGBColor(26, 26, 26)
@@ -140,7 +140,7 @@ def _run(p, text: str, size: float = BODY_SIZE, bold: bool = False) -> None:
 
 
 def _hyperlink_run(paragraph, text: str, url: str, size: float = CONTACT_SIZE) -> None:
-    """Black hyperlink — no underline, no italic, no bold."""
+    """Black hyperlink - no underline, no italic, no bold."""
     if not url:
         _run(paragraph, text, size)
         return
@@ -186,7 +186,7 @@ def _hyperlink_run(paragraph, text: str, url: str, size: float = CONTACT_SIZE) -
         hyperlink.append(r)
         paragraph._p.append(hyperlink)
     except Exception as _e:
-        log.debug(f"Hyperlink creation failed for '{text}': {_e} — using plain text.")
+        log.debug(f"Hyperlink creation failed for '{text}': {_e} - using plain text.")
         _run(paragraph, text, size)
 
 
@@ -289,7 +289,7 @@ def _render_narrative(doc: Document, content: str, colon: bool = False) -> None:
     - Heading lines (project/role titles): bold 12pt, colon appended for projects
     - Body lines: 11pt, not bold
     - 6pt spacer added BETWEEN project body and next project heading only
-      (never after the last project — that creates unwanted gaps before Education)
+      (never after the last project - that creates unwanted gaps before Education)
     """
     # Always split into individual lines; ignore blank lines.
     # Heading vs body is detected by line content, not position.
@@ -315,7 +315,7 @@ def _render_narrative(doc: Document, content: str, colon: bool = False) -> None:
                 _body_sp(p, before=0, after=2)
                 _run(p, line, BODY_SIZE)
 
-            # No spacer between projects — they flow directly one after another.
+            # No spacer between projects - they flow directly one after another.
 
 
 def _render_education(doc: Document, content: str) -> None:
