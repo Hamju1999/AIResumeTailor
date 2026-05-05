@@ -125,8 +125,8 @@ Output ONLY valid JSON — no preamble, no explanation.
 Rules for skill_groups:
   Extract the EXACT text used for each skill group in the template.
   For example: ["Programming and Engineering", "AI and Machine Learning", "Analytics and Visualisation"]
-  If the template does not define skill groups explicitly, return these defaults:
-  ["Programming & Engineering", "Applied AI & NLP", "Analytics & Visualization"]
+  If the template does not define skill groups explicitly, return an empty list [].
+  Only return group names if they are literally written in the format template.
 
 Rules for max_pages:
   1 = US/Canada standard (one page strict)
@@ -134,6 +134,21 @@ Rules for max_pages:
   3 = Australian, UK, New Zealand, or explicitly multi-page formats
 """
 
+def _groups_are_explicit(groups) -> bool:
+    """
+    Returns True only if the LLM found skill groups explicitly stated
+    in the format template — not if it fell back to the defaults.
+    The defaults are the three standard US groups. If the returned groups
+    exactly match the defaults, treat as not explicitly specified.
+    """
+    if not groups:
+        return False
+    defaults = {
+        "Programming & Engineering",
+        "Applied AI & NLP",
+        "Analytics & Visualization",
+    }
+    return set(groups) != defaults
 
 def _build_params(data: dict) -> FormatParams:
     """Convert parsed JSON dict into a FormatParams object."""
@@ -146,7 +161,7 @@ def _build_params(data: dict) -> FormatParams:
                                 "Applied AI & NLP",
                                 "Analytics & Visualization",
                             ],
-        skill_groups_fixed = bool(data.get("skill_groups")),
+        skill_groups_fixed = _groups_are_explicit(data.get("skill_groups")),
         max_projects      = int(data.get("max_projects") or 3),
         project_bullets   = int(data.get("project_bullets") or 3),
         exp_bullets_min   = int(data.get("exp_bullets_min") or 4),
@@ -195,7 +210,14 @@ def _infer_from_text(text: str) -> FormatParams:
         ]
     # Cap at 5 groups
     skill_groups = skill_groups[:5]
-    skill_groups_fixed = len(skill_groups) >= 2
+    # Only treat as fixed if the heuristic actually found groups
+    # (not if we fell back to the three standard defaults)
+    defaults = {
+        "Programming & Engineering",
+        "Applied AI & NLP",
+        "Analytics & Visualization",
+    }
+    skill_groups_fixed = bool(skill_groups) and set(skill_groups) != defaults
 
     # Project count
     max_projects = 3
