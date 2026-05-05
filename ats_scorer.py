@@ -1,4 +1,4 @@
-"""ATS Scorer - keyword extraction and match scoring."""
+"""ATS Scorer — keyword extraction and match scoring."""
 from __future__ import annotations
 import re
 from dataclasses import dataclass, field
@@ -26,7 +26,17 @@ _STOP = {
     "us","ca","inc","llc","corp","ltd","hiring","grad","new","junior","senior",
     "level","like","via","per","day","week","month","build","use","make","get",
     "give","take","come","go","see","know","think","want","need","help","learn",
-    "grow","lead","manage","own","drive","impact","cross","functional",
+    "grow","lead","manage","own","drive","impact","cross","functional", "results","department","sources","clients","development","reports","queries",
+    "documentation","presentations","campus","medicine","medical","health","system",
+    "systems","office","team","teams","role","roles","focus","focuses","support",
+    "supports","generate","generates","review","reviews","identifies","compiles",
+    "performs","assists","designs","prepares","merges","partners","translates",
+    "interprets","interprets","defines","formulates","validates","generates",
+    "ranging","simple","complex","various","established","particular","successful",
+    "completion","appropriate","combination","exceptional","demonstrated","effective",
+    "independent","creativity","challenging","balance","verbal","written",
+    "embedded","coordination","partnership","actionable","insights","faculty",
+    "physicians","researchers","consumers","customers","judgment","thinking",
 }
 
 _KNOWN_PHRASES = {
@@ -52,7 +62,11 @@ _KNOWN_PHRASES = {
     "distributed computing","sql query","stored procedure",
     "continuous integration","continuous deployment",
     "sentiment analysis","text classification","named entity",
-    "recommendation system","search ranking",
+    "recommendation system","search ranking", "data warehouse","radiation oncology","sql server","reporting services",
+    "microsoft sql","quality improvement","outcomes research","clinical data",
+    "data aggregation","data mining","data modeling","database design",
+    "critical thinking","problem solving","decision making","genitourinary cancer",
+    "enterprise data","statistical analysis","business solutions","quality metrics",
 }
 
 _HARD_SKILLS = {
@@ -66,7 +80,8 @@ _HARD_SKILLS = {
     "openai","langchain","huggingface","wandb","mlflow","dvc",
     "tesseract","git","linux","bash",
     "xgboost","lightgbm","catboost","statsmodels","scipy","nltk","spacy",
-    "etl","api","nosql","looker","dask","ray","metabase","superset",
+    "etl","api","nosql","looker","dask","ray","metabase","superset", "ssrs","hipaa","irb","oncology","sql server","mysql","postgres","postgresql",
+    "reporting","sql","microsoft",
 }
 
 _SYNONYMS = {
@@ -214,9 +229,9 @@ def _extract(raw, norm):
             if tri in _KNOWN_PHRASES:
                 weights[tri] = weights.get(tri, 0) + pw * 2.5
         for tok in tokens:
-            if tok not in _STOP and tok not in _HARD_SKILLS and len(tok) > 3 and tok.isalpha():
-                weights[tok] = weights.get(tok, 0) + pw * 0.4
-    filtered = {k: v for k, v in weights.items() if v >= 1.0}
+            if tok not in _STOP and tok not in _HARD_SKILLS and len(tok) > 4 and tok.isalpha():
+                weights[tok] = weights.get(tok, 0) + pw * 0.3
+    filtered = {k: v for k, v in weights.items() if v >= 1.5}
     return dict(sorted(filtered.items(), key=lambda x: -x[1])[:50])
 
 
