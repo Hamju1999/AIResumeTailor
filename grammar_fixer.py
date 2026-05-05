@@ -1,5 +1,5 @@
 """
-Grammar Fixer — fixes grammar and punctuation in resume text fields.
+Grammar Fixer - fixes grammar and punctuation in resume text fields.
 
 Uses Claude itself to correct grammatical errors, missing commas,
 and punctuation issues. Runs AFTER tailoring and BEFORE verification
@@ -24,7 +24,7 @@ from models import TailoredResume
 
 log = logging.getLogger("grammar_fixer")
 
-# Compound adjectives that should KEEP their hyphen — standard English usage
+# Compound adjectives that should KEEP their hyphen - standard English usage
 KEEP_HYPHENATED = {
     "end-to-end", "large-scale", "small-scale", "two-stage", "multi-stage",
     "real-time", "state-of-the-art", "high-fidelity", "high-performance",
@@ -39,13 +39,13 @@ and sentence structure in the text provided.
 
 Rules:
 1. Fix missing commas, incorrect grammar, and awkward phrasing.
-2. Keep the EXACT same meaning, facts, and word choices — do not paraphrase.
+2. Keep the EXACT same meaning, facts, and word choices - do not paraphrase.
 3. Keep these hyphenated compounds as-is (they are correct):
    end-to-end, large-scale, two-stage, real-time, state-of-the-art,
    high-fidelity, high-performance, data-driven, rule-based, cross-functional.
 4. Do NOT change technical terms, names, tools, or any factual content.
 5. Keep first-person voice (I built, I engineered, I designed).
-6. Output ONLY the corrected text — no explanation, no preamble.
+6. Output ONLY the corrected text - no explanation, no preamble.
 """
 
 
