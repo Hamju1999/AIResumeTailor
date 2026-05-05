@@ -515,6 +515,7 @@
               <th>Board</th>
               <th>Status</th>
               <th>Resume</th>
+              <th>ATS Score</th>
               <th>Link</th>
             </tr>
           </thead>
@@ -749,6 +750,10 @@ function updateResultsPanel(state) {
         <td><span class="badge badge-board">${escHtml(r.board)}</span></td>
         <td><span class="badge badge-passed">✓ Passed</span></td>
         <td><a href="/api/download/${state.run_id}/zip" download style="font-size:12px">⬇ DOCX</a></td>
+        <td>
+          <button class="btn btn-ghost btn-sm" onclick="scanATS('${state.run_id}','${escHtml(r.job_id)}',this)">Scan</button>
+          <div id="ats-${escHtml(r.job_id)}" style="display:none;margin-top:6px;font-size:11px"></div>
+        </td>
         <td><a href="${escHtml(r.job_url)}" target="_blank" style="font-size:12px">Open ↗</a></td>
       </tr>`).join('');
   }
@@ -800,6 +805,34 @@ async function loadHistory() {
   }).join('');
 }
 
+// ── ATS Scanner ────────────────────────────────────────────────────────────
+async function scanATS(runId, jobId, btn) {
+  btn.textContent = '…';
+  btn.disabled = true;
+  try {
+    const res  = await fetch(`/api/ats-score/${runId}/${jobId}`);
+    const data = await res.json();
+    btn.style.display = 'none';
+    const box = document.getElementById(`ats-${jobId}`);
+    if (data.error) {
+      box.innerHTML = `<span style="color:var(--danger)">${escHtml(data.error)}</span>`;
+    } else {
+      const color = data.score >= 75 ? 'var(--success)' : data.score >= 50 ? 'var(--warn)' : 'var(--danger)';
+      const missing = data.missing?.length
+        ? `<div style="color:var(--warn);margin-top:3px">Missing: ${data.missing.map(escHtml).join(', ')}</div>`
+        : '';
+      box.innerHTML = `
+        <span style="font-size:18px;font-weight:700;color:${color}">${data.score}%</span>
+        <span style="color:var(--muted);margin-left:4px">match</span>
+        ${missing}`;
+    }
+    box.style.display = 'block';
+  } catch(e) {
+    btn.textContent = 'Scan';
+    btn.disabled = false;
+  }
+}
+  
 // ── Utilities ──────────────────────────────────────────────────────────────
 function escHtml(s) {
   return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
