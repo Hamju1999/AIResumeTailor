@@ -398,7 +398,11 @@ async def _run_custom_urls(urls: list[str]):
                     if len(desc) > 200:
                         break
             if not desc or len(desc) < 100:
-                log.warning(f"No usable description: {url}")
+                if r and len(r.text) < 3000:
+                    log.warning(f"URL appears to be JavaScript-rendered (no static content): {url}")
+                    log.warning(f"Try copying the job description text and using a plain text paste instead.")
+                else:
+                    log.warning(f"No usable description: {url}")
                 continue
             title = ""
             for sel in ["h1", ".top-card-layout__title", ".jobsearch-JobInfoHeader-title",
