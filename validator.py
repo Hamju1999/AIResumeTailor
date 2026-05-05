@@ -56,7 +56,6 @@ async def validate_resume(
                 ))
     else:
         # Just check that N non-empty skill lines exist with the right format (Label: items.)
-        import re
         skill_lines = [
             l.strip() for l in skills_text.splitlines()
             if l.strip() and ":" in l and l.strip().endswith(".")
