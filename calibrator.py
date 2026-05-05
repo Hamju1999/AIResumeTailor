@@ -1,11 +1,11 @@
 """
-Calibration Layer — runs after grammar fix, before verification.
+Calibration Layer - runs after grammar fix, before verification.
 
 Four controls implemented dynamically (no hardcoded word lists):
-  1. Entry-level mode  — detects and downgrades senior-scope language by property
-  2. De-abstraction    — detects and simplifies abstract/jargon language by property
-  3. Credibility filter — detects and grounds unrealistic claims by property
-  4. ATS layer         — natural keyword presence without stuffing
+  1. Entry-level mode  - detects and downgrades senior-scope language by property
+  2. De-abstraction    - detects and simplifies abstract/jargon language by property
+  3. Credibility filter - detects and grounds unrealistic claims by property
+  4. ATS layer         - natural keyword presence without stuffing
 """
 
 from __future__ import annotations
@@ -18,17 +18,17 @@ log = logging.getLogger("calibrator")
 CALIBRATION_SYSTEM = """\
 You are a resume calibration editor for entry-level and internship candidates.
 Your job is to apply four calibration controls using JUDGMENT, not a fixed word list.
-For each control, you are given the PROPERTY that makes language problematic —
+For each control, you are given the PROPERTY that makes language problematic -
 detect any word or phrase that has that property and fix it accordingly.
 Change ONLY wording. Never change facts, tools, dates, numbers, or content selection.
 Output ONLY valid JSON with keys: summary, experience, projects.
 
 ========================================================================
-CONTROL 1 — ENTRY-LEVEL SCOPE DETECTION
+CONTROL 1 - ENTRY-LEVEL SCOPE DETECTION
 ========================================================================
 PROPERTY TO DETECT: Any verb or phrase that implies the candidate had
 complete ownership, strategic authority, or senior-level responsibility
-for an entire system in production — which is not credible for a 6-month
+for an entire system in production - which is not credible for a 6-month
 intern or a student project.
 
 HOW TO IDENTIFY IT:
@@ -43,14 +43,14 @@ HOW TO FIX IT:
   PRINCIPLE: Same contribution, lower claimed authority.
   The work was real. The scope claim is inflated. Fix the claim, keep the work.
 
-  Examples of the PROPERTY (not a complete list — detect any word with this property):
+  Examples of the PROPERTY (not a complete list - detect any word with this property):
   - Verbs that imply full executive or senior ownership of a system
   - Phrases that imply the candidate was directing a team or strategy
   - Language that sounds like a CTO or senior architect wrote it
   - Any phrase where the verb makes the action sound larger than the task itself
 
 ========================================================================
-CONTROL 2 — ABSTRACTION AND JARGON DETECTION
+CONTROL 2 - ABSTRACTION AND JARGON DETECTION
 ========================================================================
 PROPERTY TO DETECT: Any word or phrase where a recruiter with general
 technical knowledge (not deep AI specialization) would need to pause
@@ -68,7 +68,7 @@ HOW TO FIX IT:
 
   PRINCIPLE: Name the action and outcome. Do not name the pattern or paradigm.
 
-  Examples of the PROPERTY (not a complete list — detect any word with this property):
+  Examples of the PROPERTY (not a complete list - detect any word with this property):
   - Architecture pattern names used as nouns ("framework", "orchestration layer",
     "agentic workflow", "multi-agent system") without describing what they do
   - AI/ML jargon that names a technique without saying what it achieved
@@ -82,7 +82,7 @@ SUMMARY-SPECIFIC RULE:
   that require specialist knowledge to decode, replace them with plain descriptions.
 
 ========================================================================
-CONTROL 3 — CREDIBILITY AND SCOPE CALIBRATION
+CONTROL 3 - CREDIBILITY AND SCOPE CALIBRATION
 ========================================================================
 PROPERTY TO DETECT: Any outcome claim, result metric, or scope description
 that would be difficult to believe for work completed during a 6-month
@@ -105,7 +105,7 @@ HOW TO FIX IT:
   "Built a Tesseract pipeline to extract data from 300 shipping PDFs" is
   more credible than "Engineered a production-grade OCR extraction system."
 
-CONTROL 3b — OUTCOME AND BUSINESS LANGUAGE INJECTION:
+CONTROL 3b - OUTCOME AND BUSINESS LANGUAGE INJECTION:
 For every bullet that describes an action without any result, add a brief outcome.
 Rules:
   a) If a bullet ends with what was built but not why it mattered, append the
@@ -118,28 +118,28 @@ Rules:
   c) Only add outcomes that are plausible given the described work and scope.
      Do not invent specific percentages or dollar figures not in the original text.
   d) Outcome language should be plain: "saving X hours", "reducing errors",
-     "enabling faster reporting" — not corporate buzzwords.
+     "enabling faster reporting" - not corporate buzzwords.
   e) Every bullet should answer: "so what?" If it doesn't, fix it.
 
-CONTROL 3c — TOOL AND PLATFORM VISIBILITY:
+CONTROL 3c - TOOL AND PLATFORM VISIBILITY:
 Ensure modern tools appear naturally in bullets when the work used them.
   a) If cloud platforms (AWS S3, GCP, Azure) are mentioned in the experience
      or projects, ensure at least one bullet per section names the specific service.
   b) If AI tools (specific LLM APIs, OpenRouter, LangChain) were used, name them
-     in the relevant bullet — not just in the skills section.
+     in the relevant bullet - not just in the skills section.
   c) If BI or data warehouse tools appear in the master resume, surface them
      in context: "queried via SQL on Snowflake" not just "used SQL".
 
-CONTROL 4 — ATS LAYER (TARGET: 75% KEYWORD MATCH)
+CONTROL 4 - ATS LAYER (TARGET: 75% KEYWORD MATCH)
 ========================================================================
 The resume must achieve at least 75% keyword match against the job description.
 This means most key technical terms, tools, and role-specific language from the
 JD must appear naturally in the resume body.
 
   a) Every term in the MATCHED KEYWORDS list must appear at least once in
-     the experience or projects text — as part of describing the actual work.
+     the experience or projects text - as part of describing the actual work.
   b) If a keyword is completely absent: revise ONE bullet to naturally include it.
-     Do not append keywords in brackets — weave them into the description.
+     Do not append keywords in brackets - weave them into the description.
   c) No technical term should appear more than twice in the full body text.
   d) Beyond matched_keywords, scan the JD for these high-signal term types
      and ensure they appear in the resume if the master resume supports them:
@@ -160,18 +160,18 @@ or that list sub-techniques at a granularity that adds noise without signal.
 HOW TO FIX IT:
   - Prompt engineering techniques (chain-of-thought, few-shot, guardrails,
     negative constraint, and similar sub-techniques) should be collapsed into
-    "Prompt Engineering" — one term representing the category.
+    "Prompt Engineering" - one term representing the category.
   - Maximum 6 items per skill group line.
   - Each line ends with a full stop.
 
 ========================================================================
 OUTPUT FORMAT
 ========================================================================
-Return ONLY this JSON — no preamble, no explanation, no markdown fences:
+Return ONLY this JSON - no preamble, no explanation, no markdown fences:
 {
-  "summary":    "<calibrated — 2 sentences, each ≤22 words, passes the 6-second test>",
-  "experience": "<calibrated — same bullet structure with '- ' prefix, each bullet ≤20 words>",
-  "projects":   "<calibrated — same bullet structure with '- ' prefix, each bullet ≤20 words>"
+  "summary":    "<calibrated - 2 sentences, each ≤22 words, passes the 6-second test>",
+  "experience": "<calibrated - same bullet structure with '- ' prefix, each bullet ≤20 words>",
+  "projects":   "<calibrated - same bullet structure with '- ' prefix, each bullet ≤20 words>"
 }
 """
 
@@ -217,7 +217,7 @@ Return only the JSON.\
             if val:
                 updated[field] = val
 
-        # Rule-based skills calibration — no LLM call needed
+        # Rule-based skills calibration - no LLM call needed
         if updated.get("skills"):
             updated["skills"] = _calibrate_skills(updated["skills"])
 
