@@ -94,7 +94,7 @@ List only skills that: appear in the selected projects and experience above,
 exist in the master resume, and align with this JD.
 Order items by JD relevance — most important first.
 Format as exactly these lines, each ending with a full stop:
-<SKILL_GROUPS_LINES>
+<SKILL_GROUPS_INSTRUCTION>
 
 STEP 5 — SUMMARY (written last, based on steps 2 to 4):
 <SUMMARY_INSTRUCTION>
@@ -130,6 +130,27 @@ def _build_tailor_system(fmt=None) -> str:
     from format_parser import FormatParams
     if fmt is None:
         fmt = FormatParams()
+    proj_bullet_instr = (
+         f"Write EXACTLY {fmt.project_bullets} bullet points per project. "
+         "Each bullet max 15 words."
+       )
+    exp_bullet_instr = (
+         f"Write {fmt.exp_bullets_min} to {fmt.exp_bullets_max} high-impact bullet points per role. "
+         "Each bullet max 15 words. Starts with '- ' and an action verb. No first-person 'I'."
+       )
+    summary_instr = (
+         f"Write EXACTLY {fmt.summary_sentences} first-person sentences. "
+         "Each sentence 20-30 words."
+       )
+    page_note = (
+         f"This resume must fit {fmt.max_pages} page{'s' if fmt.max_pages > 1 else ''}. "
+         + ("Do NOT limit to one page — multi-page formats expect detail."
+              if fmt.max_pages > 1 else "Strict one-page limit — every word must earn its place.")
+       )
+    proj_count_instr = (
+         f"Select exactly {fmt.max_projects} projects that most strongly align with the JD. "
+         "If fewer clearly align, pick the strongest and add the next closest."
+       )
 
     if fmt.skill_groups_fixed:
        # Template specified exact group names — use them as-is
@@ -149,27 +170,6 @@ def _build_tailor_system(fmt=None) -> str:
            f"if that category has fewer than 2 skills.\n"
            f"Suggested group names (adapt as needed):\n{suggested}\n"
            f"Each line format: GroupName: item1, item2, item3."
-       )
-       proj_bullet_instr = (
-           f"Write EXACTLY {fmt.project_bullets} bullet points per project. "
-           "Each bullet max 15 words."
-       )
-       exp_bullet_instr = (
-           f"Write {fmt.exp_bullets_min} to {fmt.exp_bullets_max} high-impact bullet points per role. "
-           "Each bullet max 15 words. Starts with '- ' and an action verb. No first-person 'I'."
-       )
-       summary_instr = (
-           f"Write EXACTLY {fmt.summary_sentences} first-person sentences. "
-           "Each sentence 20-30 words."
-       )
-       page_note = (
-           f"This resume must fit {fmt.max_pages} page{'s' if fmt.max_pages > 1 else ''}. "
-           + ("Do NOT limit to one page — multi-page formats expect detail."
-              if fmt.max_pages > 1 else "Strict one-page limit — every word must earn its place.")
-       )
-       proj_count_instr = (
-           f"Select exactly {fmt.max_projects} projects that most strongly align with the JD. "
-           "If fewer clearly align, pick the strongest and add the next closest."
        )
 
     return (
