@@ -852,7 +852,7 @@ async function scanATS(runId, jobId, btn) {
       const threshold = data.threshold || 75;
       const status = data.above_threshold
         ? `<div style="color:var(--success);font-size:10px;margin-top:2px">✓ Above ${threshold}% target</div>`
-        : `<div style="color:var(--danger);font-size:10px;margin-top:2px">✗ Below ${threshold}% — rerun recommended</div>`;
+        : `<div style="color:var(--danger);font-size:10px;margin-top:2px">✗ Below ${threshold}% -rerun recommended</div>`;
       const hscore = data.hard_skill_score != null
         ? `<div style="color:var(--muted);font-size:10px">Hard skills: ${data.hard_skill_score}%</div>`
         : '';
