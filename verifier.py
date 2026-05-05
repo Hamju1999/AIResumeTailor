@@ -1,5 +1,5 @@
 """
-Phase 4 — Hallucination Verifier + JD Alignment Checker
+Phase 4 - Hallucination Verifier + JD Alignment Checker
 
 Part A: Cross-checks every factual claim against the master resume.
 Part B: Verifies that the resume is genuinely tailored to the job description
@@ -65,7 +65,7 @@ async def verify_resume(
     if not passed:
         log.warning(f"Verification FAILED ({len(issues)} issue(s)): {resume.target_title}")
         for issue in issues:
-            log.debug(f"  [{issue.field}] {issue.claim!r} — {issue.reason}")
+            log.debug(f"  [{issue.field}] {issue.claim!r} - {issue.reason}")
 
     return VerificationResult(
         passed=passed,
