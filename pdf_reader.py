@@ -1,7 +1,7 @@
 """
-PDF Reader — extracts plain text from PDF files.
+PDF Reader - extracts plain text from PDF files.
 
-Uses pypdf (pure Python, no system-level C libs needed — Termux safe).
+Uses pypdf (pure Python, no system-level C libs needed - Termux safe).
 Falls back page-by-page and skips pages with no extractable text
 so a single bad page doesn't blow up the whole read.
 """
@@ -46,7 +46,7 @@ def extract_text(pdf_path: Path) -> str:
             else:
                 log.debug(f"  Page {i+1}: no text extracted (image-only page?)")
         except Exception as e:
-            log.warning(f"  Page {i+1}: extraction error — {e}")
+            log.warning(f"  Page {i+1}: extraction error - {e}")
 
     if not extracted:
         raise RuntimeError(
