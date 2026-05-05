@@ -1,9 +1,9 @@
 """
-ResTail — Configuration
+ResTail - Configuration
 
 Personal settings (name, contact, files, locations, job titles, API key)
 are stored in user_config.json after you run the setup wizard.
-This file reads those settings dynamically — do not hardcode personal info here.
+This file reads those settings dynamically - do not hardcode personal info here.
 """
 
 from __future__ import annotations
