@@ -249,75 +249,62 @@ def api_download(run_id: str, file_type: str):
 
 @app.route("/api/ats-score/<run_id>/<job_id>")
 def api_ats_score(run_id: str, job_id: str):
-    """
-    Keyword-based ATS score: checks how many JD keywords appear in the resume.
-    Returns score 0-100, matched keywords, and missing keywords.
-    """
-    import re
-    from pathlib import Path
-
-    # Load the manifest to get JD and matched_keywords for this job
+    import ats_scorer
     manifest_path = config.OUTPUT_DIR / f"manifest_{run_id}.json"
     if not manifest_path.exists():
         return jsonify({"error": "Run not found"}), 404
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except Exception as e:
+        return jsonify({"error": f"Could not read manifest: {e}"}), 500
 
-    manifest = json.loads(manifest_path.read_text())
-    
-    # Find the specific job result
-    job_result = next(
-        (r for r in manifest.get("results", []) if r.get("job", {}).get("job_id") == job_id),
-        None
-    )
+    job_result = None
+    for r in manifest.get("results", []):
+        if r.get("job", {}).get("job_id") == job_id:
+            job_result = r
+            break
     if not job_result:
-        return jsonify({"error": "Job not found"}), 404
+        return jsonify({"error": "Job not found in this run"}), 404
 
-    # Load the .docx text
+    jd_text     = job_result.get("job", {}).get("description", "")
     resume_path = Path(job_result.get("resume_path", ""))
+    matched_kw  = job_result.get("resume", {}).get("matched_keywords", [])
+
     if not resume_path.exists():
-        return jsonify({"error": "Resume file not found"}), 404
+        return jsonify({"error": "Resume .docx not found"}), 404
+    if not jd_text:
+        return jsonify({"error": "No job description stored"}), 400
 
     try:
-        from docx import Document
-        doc = Document(str(resume_path))
-        resume_text = " ".join(p.text for p in doc.paragraphs).lower()
+        from docx import Document as DocxDocument
+        doc = DocxDocument(str(resume_path))
+        resume_text = " ".join(p.text for p in doc.paragraphs if p.text.strip())
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": f"Could not read resume: {e}"}), 500
 
-    # Get JD keywords — use matched_keywords from the tailor plus extract from JD
-    jd_text = job_result.get("job", {}).get("description", "")
-    matched_kw = job_result.get("resume", {}).get("matched_keywords", [])
-    
-    # Extract important terms from JD (nouns and technical terms, 2+ chars)
-    # Simple approach: find words that appear in JD but check presence in resume
-    stop_words = {"the","and","for","with","this","that","from","are","has",
-                  "have","will","you","our","we","be","to","of","in","a","an",
-                  "is","it","at","by","or","as","on","your","their","can","may"}
-    
-    jd_words = set(re.findall(r'\b[a-zA-Z][a-zA-Z+#.]{2,}\b', jd_text.lower()))
-    jd_words -= stop_words
-    
-    # Score: check matched_keywords first (highest signal), then JD terms
-    all_keywords = list(dict.fromkeys(matched_kw + list(jd_words)))[:50]  # top 50
-    
-    found = [kw for kw in all_keywords if kw.lower() in resume_text]
-    missing = [kw for kw in matched_kw if kw.lower() not in resume_text]  # only matched_kw for missing
-    
-    score = round(len(found) / len(all_keywords) * 100) if all_keywords else 0
-    
-    # Log warning if below threshold
-    if score < 75:
+    result = ats_scorer.score(
+        jd_text=jd_text,
+        resume_text=resume_text,
+        matched_keywords=matched_kw,
+        threshold=75,
+    )
+
+    if not result.above_threshold:
         logging.getLogger("ats").warning(
-            f"ATS score {score}% is below 75% threshold for '{job_result.get('title','job')}'. "
-            f"Missing keywords: {', '.join(missing[:5])}"
+            "ATS score %d%% below 75%%. Missing: %s",
+            result.score, ", ".join(result.missing[:5])
         )
 
     return jsonify({
-        "score": score,
-        "found": found[:20],
-        "missing": missing[:10],
-        "total_checked": len(all_keywords),
-        "above_threshold": score >= 75,
-        "threshold": 75,
+        "score":            result.score,
+        "above_threshold":  result.above_threshold,
+        "threshold":        result.threshold,
+        "hard_skill_score": result.hard_skill_score,
+        "matched":          result.matched,
+        "missing":          result.missing,
+        "matched_phrases":  result.matched_phrases,
+        "total_checked":    result.total_checked,
+        "breakdown":        result.breakdown,
     })
 
 @app.route("/api/history")
