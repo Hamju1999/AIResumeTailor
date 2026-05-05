@@ -1,5 +1,5 @@
 """
-Phase 1 + 2 — Job Discovery & Extraction
+Phase 1 + 2 - Job Discovery & Extraction
 
 Entry-level / internship enforcement:
   LinkedIn: f_E=1,2 (experience level: internship + entry level)
@@ -65,7 +65,7 @@ _SPAM_COMPANY_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
-MIN_DESC_LEN = 200   # characters — stub listings with < this are skipped
+MIN_DESC_LEN = 200   # characters - stub listings with < this are skipped
 
 
 def _is_senior_title(title: str) -> bool:
@@ -104,7 +104,7 @@ def _get(url: str, params: dict | None = None, timeout: int = 15) -> requests.Re
             r = _session().get(url, params=params, timeout=timeout)
             if r.status_code == 429:
                 wait = 10 * (attempt + 1)
-                log.warning(f"Rate-limited — waiting {wait}s")
+                log.warning(f"Rate-limited - waiting {wait}s")
                 time.sleep(wait)
                 continue
             if r.status_code >= 400:
@@ -147,7 +147,7 @@ async def discover_jobs() -> list[Job]:
                 break
 
             remaining = config.RESULTS_PER_TITLE - len(title_raw)
-            log.info(f"  [{location}] '{title}' — need {remaining} more")
+            log.info(f"  [{location}] '{title}' - need {remaining} more")
 
             for board in active:
                 if len(title_raw) >= config.RESULTS_PER_TITLE:
@@ -366,7 +366,7 @@ def _indeed_description(url: str) -> str:
 
 
 # ── Dice ──────────────────────────────────────────────────────────────────────
-# No reliable career-level API param — append to query to bias ranking
+# No reliable career-level API param - append to query to bias ranking
 
 _DICE_API = "https://job-search-api.svc.dhigroupinc.com/v1/dice/jobs/search"
 
@@ -431,7 +431,7 @@ def _scrape_dice(title: str, location: str) -> list[RawJob]:
 
 
 # ── Glassdoor ─────────────────────────────────────────────────────────────────
-# No reliable experience filter via guest endpoint — relies on post-scrape filters
+# No reliable experience filter via guest endpoint - relies on post-scrape filters
 
 _GD_SEARCH = "https://www.glassdoor.com/Job/jobs.htm"
 
@@ -520,7 +520,7 @@ def _gd_description(url: str) -> str:
 
 
 # ── Handshake ─────────────────────────────────────────────────────────────────
-# Public job search — no auth required for browsing
+# Public job search - no auth required for browsing
 _HANDSHAKE_SEARCH = "https://app.joinhandshake.com/stu/postings"
 
 def _scrape_handshake(title: str, location: str) -> list[RawJob]:
@@ -583,7 +583,7 @@ def _scrape_handshake(title: str, location: str) -> list[RawJob]:
 
 # ── Interstride ───────────────────────────────────────────────────────────────
 # Targets international student / OPT / STEM OPT job seekers specifically.
-# Public job board — no auth required for basic listing pages.
+# Public job board - no auth required for basic listing pages.
 _INTERSTRIDE_SEARCH = "https://app.interstride.com/jobs"
 
 def _scrape_interstride(title: str, location: str) -> list[RawJob]:
@@ -644,7 +644,7 @@ def _scrape_interstride(title: str, location: str) -> list[RawJob]:
 
 
 def _get_description_from_page(url: str) -> str:
-    """Generic description extractor — tries common selectors across job boards."""
+    """Generic description extractor - tries common selectors across job boards."""
     r = _get(url)
     if r is None:
         return ""
