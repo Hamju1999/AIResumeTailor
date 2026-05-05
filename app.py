@@ -193,6 +193,9 @@ def api_run():
     data = request.get_json(force=True) or {}
     custom_urls: list[str] = [u.strip() for u in data.get("custom_urls", []) if u.strip()]
     limit: int = int(data.get("limit", 0))
+    paste_jd:      str = data.get("paste_jd", "").strip()
+    paste_title:   str = data.get("paste_title", "Job").strip()
+    paste_company: str = data.get("paste_company", "Company").strip()
 
     with _state_lock:
         _run_state.update({
@@ -207,7 +210,7 @@ def api_run():
         except queue.Empty:
             break
 
-    thread = threading.Thread(target=_run_pipeline, args=(custom_urls, limit), daemon=True)
+    thread = threading.Thread(target=_run_pipeline, args=(custom_urls, limit, paste_jd, paste_title, paste_company), daemon=True)
     thread.start()
     return jsonify({"ok": True})
 
@@ -294,18 +297,27 @@ def api_ats_score(run_id: str, job_id: str):
     jd_words -= stop_words
     
     # Score: check matched_keywords first (highest signal), then JD terms
-    all_keywords = list(dict.fromkeys(matched_kw + list(jd_words)))[:40]  # top 40
+    all_keywords = list(dict.fromkeys(matched_kw + list(jd_words)))[:50]  # top 50
     
     found = [kw for kw in all_keywords if kw.lower() in resume_text]
     missing = [kw for kw in matched_kw if kw.lower() not in resume_text]  # only matched_kw for missing
     
     score = round(len(found) / len(all_keywords) * 100) if all_keywords else 0
     
+    # Log warning if below threshold
+    if score < 75:
+        logging.getLogger("ats").warning(
+            f"ATS score {score}% is below 75% threshold for '{job_result.get('title','job')}'. "
+            f"Missing keywords: {', '.join(missing[:5])}"
+        )
+
     return jsonify({
         "score": score,
         "found": found[:20],
         "missing": missing[:10],
         "total_checked": len(all_keywords),
+        "above_threshold": score >= 75,
+        "threshold": 75,
     })
 
 @app.route("/api/history")
@@ -328,10 +340,13 @@ def api_history():
 
 # ── Pipeline runner ───────────────────────────────────────────────────────────
 
-def _run_pipeline(custom_urls: list[str], limit: int) -> None:
+def _run_pipeline(custom_urls: list[str], limit: int, paste_jd: str = "", paste_title: str = "", paste_company: str = "") -> None:
     log = logging.getLogger("ui.runner")
     try:
-        if custom_urls:
+        if paste_jd:
+            log.info(f"Mode: pasted JD — {paste_title} @ {paste_company}")
+            manifest = asyncio.run(_run_paste_jd(paste_jd, paste_title, paste_company))
+        elif custom_urls:
             log.info(f"Mode: custom URLs ({len(custom_urls)} links provided)")
             manifest = asyncio.run(_run_custom_urls(custom_urls))
         else:
@@ -454,6 +469,42 @@ async def _run_custom_urls(urls: list[str]):
     pl._save_outputs(manifest)
     return manifest
 
+async def _run_paste_jd(jd_text: str, title: str, company: str):
+    """Skip scraping and URL fetching — build a Job directly from pasted text."""
+    import hashlib
+    import pipeline as pl
+    from models import Job
+
+    log = logging.getLogger("ui.paste")
+    await pl.load_content()
+
+    job_id = hashlib.md5(jd_text[:200].encode()).hexdigest()[:12]
+    job = Job(
+        job_url="",
+        title=title,
+        company=company,
+        location="",
+        date_posted=datetime.utcnow(),
+        description=jd_text,
+        board="paste",
+        job_id=job_id,
+    )
+    log.info(f"Processing pasted JD: {title} @ {company}")
+
+    run_id = uuid.uuid4().hex[:8]
+    pl._run_id = run_id
+    outcome = await pl._process_job(job)
+    results  = [outcome] if hasattr(outcome, "resume_path") else []
+    failures = [outcome] if not hasattr(outcome, "resume_path") else []
+
+    from models import PipelineRun
+    manifest = PipelineRun(
+        run_id=run_id, started_at=datetime.utcnow(), finished_at=datetime.utcnow(),
+        total_found=1, total_passed=len(results), total_failed=len(failures),
+        results=results, failures=failures,
+    )
+    pl._save_outputs(manifest)
+    return manifest
 
 def _job_result_dict(r) -> dict:
     docx_path = Path(r.resume_path) if r.resume_path else None
