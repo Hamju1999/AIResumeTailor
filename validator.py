@@ -42,14 +42,34 @@ async def validate_resume(
                 suggestion=f"Populate '{field}' from the master resume.",
             ))
 
-    # ── 2. Skill group headers — dynamic from format template ─────────────────
+    # ── 2. Skill group headers ────────────────────────────────────────────────
     skills_text = resume.skills or ""
-    for group in fmt.skill_groups:
-        if group not in skills_text:
+    
+    if fmt.skill_groups_fixed:
+        # Exact match required
+        for group in fmt.skill_groups:
+            if group not in skills_text:
+                issues.append(ValidationIssue(
+                    category="format",
+                    description=f"Skills section missing required group: '{group}'",
+                    suggestion=f"Add a line starting with '{group}:' to the skills section.",
+                ))
+    else:
+        # Just check that N non-empty skill lines exist with the right format (Label: items.)
+        import re
+        skill_lines = [
+            l.strip() for l in skills_text.splitlines()
+            if l.strip() and ":" in l and l.strip().endswith(".")
+        ]
+        expected = len(fmt.skill_groups)
+        if len(skill_lines) < expected:
             issues.append(ValidationIssue(
                 category="format",
-                description=f"Skills section missing required group: '{group}'",
-                suggestion=f"Add a line starting with '{group}:' to the skills section.",
+                description=(
+                    f"Skills section has {len(skill_lines)} group lines. "
+                    f"Expected {expected}. Each line must be: GroupName: item1, item2."
+                ),
+                suggestion=f"Add {expected - len(skill_lines)} more skill group line(s).",
             ))
 
     # ── 3. No stray bullet characters (•, ▸, –) in experience or projects ─────
