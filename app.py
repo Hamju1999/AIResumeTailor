@@ -455,6 +455,7 @@ def _job_result_dict(r) -> dict:
     docx_path = Path(r.resume_path) if r.resume_path else None
     return {
         "title": r.job.title, "company": r.job.company, "board": r.job.board,
+        "job_id": r.job.job_id,
         "location": r.job.location or "", "job_url": r.job.job_url,
         "resume_file": docx_path.name if docx_path else "", "attempts": r.attempts,
     }
