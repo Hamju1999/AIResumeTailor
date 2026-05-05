@@ -41,6 +41,10 @@ Before writing anything, carefully read the full job description and note:
       Entry = intern/grad tone, concrete scope markers, no inflated seniority.
       Mid = owns a domain, leads small work, delivers independently.
       Senior = leads teams/systems, strategic scope acceptable.
+  (f) ATS target: the resume must achieve at least 75% keyword match.
+      After selecting content, verify that the most-repeated technical terms
+      in the JD appear at least once in your output. If a key JD term is
+      absent and the master resume supports it, include it.
 Every section you write must reflect this analysis.
 
 STEP 1 — EDUCATION (fixed):
@@ -94,7 +98,7 @@ List only skills that: appear in the selected projects and experience above,
 exist in the master resume, and align with this JD.
 Order items by JD relevance — most important first.
 Format as exactly these lines, each ending with a full stop:
-<SKILL_GROUPS_INSTRUCTION>
+<SKILL_GROUPS_INSTRUCTIONS>
 
 STEP 5 — SUMMARY (written last, based on steps 2 to 4):
 <SUMMARY_INSTRUCTION>
@@ -130,47 +134,48 @@ def _build_tailor_system(fmt=None) -> str:
     from format_parser import FormatParams
     if fmt is None:
         fmt = FormatParams()
+        
     proj_bullet_instr = (
-         f"Write EXACTLY {fmt.project_bullets} bullet points per project. "
-         "Each bullet max 15 words."
-       )
+        f"Write EXACTLY {fmt.project_bullets} bullet points per project. "
+        "Each bullet max 15 words."
+        )
     exp_bullet_instr = (
-         f"Write {fmt.exp_bullets_min} to {fmt.exp_bullets_max} high-impact bullet points per role. "
-         "Each bullet max 15 words. Starts with '- ' and an action verb. No first-person 'I'."
-       )
+        f"Write {fmt.exp_bullets_min} to {fmt.exp_bullets_max} high-impact bullet points per role. "
+        "Each bullet max 15 words. Starts with '- ' and an action verb. No first-person 'I'."
+        )
     summary_instr = (
-         f"Write EXACTLY {fmt.summary_sentences} first-person sentences. "
-         "Each sentence 20-30 words."
-       )
+        f"Write EXACTLY {fmt.summary_sentences} first-person sentences. "
+        "Each sentence 20-30 words."
+        )
     page_note = (
-         f"This resume must fit {fmt.max_pages} page{'s' if fmt.max_pages > 1 else ''}. "
-         + ("Do NOT limit to one page — multi-page formats expect detail."
-              if fmt.max_pages > 1 else "Strict one-page limit — every word must earn its place.")
-       )
+        f"This resume must fit {fmt.max_pages} page{'s' if fmt.max_pages > 1 else ''}. "
+        + ("Do NOT limit to one page — multi-page formats expect detail."
+            if fmt.max_pages > 1 else "Strict one-page limit — every word must earn its place.")
+        )
     proj_count_instr = (
-         f"Select exactly {fmt.max_projects} projects that most strongly align with the JD. "
-         "If fewer clearly align, pick the strongest and add the next closest."
-       )
+        f"Select exactly {fmt.max_projects} projects that most strongly align with the JD. "
+        "If fewer clearly align, pick the strongest and add the next closest."
+        )
 
     if fmt.skill_groups_fixed:
-       # Template specified exact group names — use them as-is
-       sg_lines = "\n".join(
-           f"  {g}: [items ordered by JD relevance]." for g in fmt.skill_groups
-       )
-       sg_instruction = (
-           f"Use EXACTLY these {len(fmt.skill_groups)} group names — do not rename or add groups:\n{sg_lines}"
-       )
-   else:
-       # Template didn't specify groups — derive from selected content
-       suggested = "\n".join(f"  {g}" for g in fmt.skill_groups)
-       sg_instruction = (
-           f"Create {len(fmt.skill_groups)} skill group lines based on the skills actually "
-           f"present in the experience and projects you selected above.\n"
-           f"Name each group to reflect what it actually contains — do not use a group name "
-           f"if that category has fewer than 2 skills.\n"
-           f"Suggested group names (adapt as needed):\n{suggested}\n"
-           f"Each line format: GroupName: item1, item2, item3."
-       )
+        # Template specified exact group names — use them as-is
+        sg_lines = "\n".join(
+            f"  {g}: [items ordered by JD relevance]." for g in fmt.skill_groups
+        )
+        sg_instruction = (
+            f"Use EXACTLY these {len(fmt.skill_groups)} group names — do not rename or add groups:\n{sg_lines}"
+        )
+    else:
+        # Template didn't specify groups — derive from selected content
+        suggested = "\n".join(f"  {g}" for g in fmt.skill_groups)
+        sg_instruction = (
+            f"Create {len(fmt.skill_groups)} skill group lines based on the skills actually "
+            f"present in the experience and projects you selected above.\n"
+            f"Name each group to reflect what it actually contains — do not use a group name "
+            f"if that category has fewer than 2 skills.\n"
+            f"Suggested group names (adapt as needed):\n{suggested}\n"
+            f"Each line format: GroupName: item1, item2, item3."
+        )
 
     return (
         TAILOR_SYSTEM

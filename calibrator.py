@@ -130,25 +130,26 @@ Ensure modern tools appear naturally in bullets when the work used them.
   c) If BI or data warehouse tools appear in the master resume, surface them
      in context: "queried via SQL on Snowflake" not just "used SQL".
 
+CONTROL 4 — ATS LAYER (TARGET: 75% KEYWORD MATCH)
 ========================================================================
-CONTROL 4 — ATS NATURAL KEYWORD INTEGRATION
-========================================================================
-PROPERTY TO DETECT: Missing technical keywords that recruiters and ATS
-systems scan for, OR keyword stuffing where the same term appears so many
-times it reads as a list rather than natural work description.
+The resume must achieve at least 75% keyword match against the job description.
+This means most key technical terms, tools, and role-specific language from the
+JD must appear naturally in the resume body.
 
-HOW TO IDENTIFY IT:
-  - Check the MATCHED KEYWORDS list provided. Each must appear at least once.
-  - Check whether any term appears more than twice in the combined text.
-  - Check whether keywords are appended (in brackets, parentheses at line end)
-    rather than woven into the description of the work itself.
-
-HOW TO FIX IT:
-  - If a keyword is absent: revise ONE bullet to naturally include it as part
-    of describing what was done.
-  - If a keyword is stuffed: reduce to the most meaningful occurrence and
-    remove redundant repetitions.
-  - Keywords must describe the actual work, not be appended for scanning.
+  a) Every term in the MATCHED KEYWORDS list must appear at least once in
+     the experience or projects text — as part of describing the actual work.
+  b) If a keyword is completely absent: revise ONE bullet to naturally include it.
+     Do not append keywords in brackets — weave them into the description.
+  c) No technical term should appear more than twice in the full body text.
+  d) Beyond matched_keywords, scan the JD for these high-signal term types
+     and ensure they appear in the resume if the master resume supports them:
+       - Specific tools or platforms named in the JD (e.g. Snowflake, dbt, Airflow)
+       - Domain-specific verbs the JD uses (e.g. "orchestrate", "model", "forecast")
+       - Technology acronyms the JD repeats (e.g. ETL, API, SQL, ML)
+       - Job-level language (e.g. "cross-functional", "stakeholder", "production")
+     If the master resume contains evidence of these, use the JD's exact terminology.
+  e) Keywords that appear in the JD title or first paragraph are highest priority.
+     Ensure at least 3 of those appear in the summary or first experience bullet.
 
 ========================================================================
 SKILLS LINE RULES (applies to skills field if it contains issues)
