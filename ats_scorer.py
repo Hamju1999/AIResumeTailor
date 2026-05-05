@@ -1,4 +1,4 @@
-"""ATS Scorer — keyword extraction and match scoring."""
+"""ATS Scorer - keyword extraction and match scoring."""
 from __future__ import annotations
 import re
 from dataclasses import dataclass, field
