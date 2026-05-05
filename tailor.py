@@ -1,5 +1,5 @@
 """
-Phase 3 — Resume Tailor Agent
+Phase 3 - Resume Tailor Agent
 
 Takes one Job + master resume + format template and returns a TailoredResume.
 Accepts optional correction notes on retry attempts.
@@ -25,7 +25,7 @@ async def tailor_resume(
 ) -> TailoredResume:
     """
     Call the Tailor Agent and parse the result into a TailoredResume.
-    Raises on JSON parse failure — let the pipeline handle retries.
+    Raises on JSON parse failure - let the pipeline handle retries.
     """
     log.info(f"Tailoring: {job.title} @ {job.company}")
 
