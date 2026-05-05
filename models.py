@@ -24,7 +24,7 @@ class JobStatus(str, Enum):
 # ── Phase 1-2: Scraping / Extraction ─────────────────────────────────────────
 
 class RawJob(BaseModel):
-    """Exactly what comes off the scraper — nothing more."""
+    """Exactly what comes off the scraper - nothing more."""
     job_url:     str
     title:       str
     company:     str
@@ -60,7 +60,7 @@ class TailoredResume(BaseModel):
     education:     str
     certifications: Optional[str] = None
 
-    # Metadata — not rendered, used by verifier / validator
+    # Metadata - not rendered, used by verifier / validator
     matched_keywords: list[str] = Field(default_factory=list)
     tailoring_notes:  str = ""
 
@@ -97,7 +97,7 @@ class ValidationResult(BaseModel):
 # ── Phase 6: Output ───────────────────────────────────────────────────────────
 
 class JobResult(BaseModel):
-    """Final output entry — one per successfully processed job."""
+    """Final output entry - one per successfully processed job."""
     job:              Job
     resume:           TailoredResume
     resume_path:      Optional[str] = None   # path to generated .docx
