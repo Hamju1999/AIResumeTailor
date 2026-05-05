@@ -9,6 +9,8 @@ ResTail automatically scrapes job listings and tailors your resume to each job u
 3. For each job: tailors your resume using 5 AI passes (tailor → grammar → verify → calibrate → validate)
 4. Produces a formatted `.docx` resume for every passing job
 5. Lets you paste job URLs you found yourself to bypass scraping
+6. Lets you paste job description you found yourself to bypass scraping
+7. Lets you run ATS scan.
 
 ## Requirements
 
