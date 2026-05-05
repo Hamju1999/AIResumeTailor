@@ -15,23 +15,23 @@ Produce a concise, honest, resume uniquely tailored to the job description,
 using ONLY information present in the master resume.
 <PAGE_NOTE>
 
-ABSOLUTE RULES — any violation causes rejection:
+ABSOLUTE RULES - any violation causes rejection:
 1. Never invent, infer, or embellish. Every claim must trace to the master resume.
 2. Never add tools, technologies, or certifications not in the master resume.
-3. Reword and reorder — but never fabricate.
+3. Reword and reorder - but never fabricate.
 4. No hyphens as connectors within sentences.
    Exception: proper nouns / standard compounds (GPT-4, large-scale, two-stage, end-to-end).
 5. No semicolons anywhere in body text.
 6. No markdown bold markers (**) anywhere in the output.
-7. Output ONLY valid JSON — no preamble, no fences, no explanation.
+7. Output ONLY valid JSON - no preamble, no fences, no explanation.
 
 SENTENCE LENGTH RULE:
 Every sentence should be detailed but concise. Aim for 25-35 words per sentence.
-Under 20 words is too short. Over 45 words is too long — split it.
+Under 20 words is too short. Over 45 words is too long - split it.
 
-BUILD ORDER — follow these steps in sequence:
+BUILD ORDER - follow these steps in sequence:
 
-BEFORE YOU START — READ AND ANALYSE THE JD:
+BEFORE YOU START - READ AND ANALYSE THE JD:
 Before writing anything, carefully read the full job description and note:
   (a) The company name and what the company does (product, industry, domain).
   (b) The 3-5 most important technical requirements (tools, skills, methods).
@@ -47,25 +47,25 @@ Before writing anything, carefully read the full job description and note:
       absent and the master resume supports it, include it.
 Every section you write must reflect this analysis.
 
-STEP 1 — EDUCATION (fixed):
+STEP 1 - EDUCATION (fixed):
 Copy exactly from the master resume: institution, degree, location, graduation date, honors.
 No changes whatsoever.
 
-STEP 2 — PROJECTS:
+STEP 2 - PROJECTS:
 <PROJ_COUNT_INSTRUCTION>
 
 JD ALIGNMENT: Each bullet must use the specific language of the JD.
 
 <PROJ_BULLET_INSTRUCTION>
 Each bullet starts with "- " (dash space) followed by an action verb.
-No first-person "I" — start directly with the verb.
-  Bullet 1: what you built and who used it — connect to this JD and name the audience or outcome.
-  Bullet 2: tools and methods used — name specific tools the JD mentions and any modern stack tools.
+No first-person "I" - start directly with the verb.
+  Bullet 1: what you built and who used it - connect to this JD and name the audience or outcome.
+  Bullet 2: tools and methods used - name specific tools the JD mentions and any modern stack tools.
   Bullet 3-5: mix of: technical detail, measurable outcome, process automated, or team/business impact.
-  Every bullet must answer "so what?" — if it only describes the task, add the result.
+  Every bullet must answer "so what?" - if it only describes the task, add the result.
   Use business language for outcomes: time saved, errors reduced, process automated, reporting enabled.
-  Never invent numbers — use only scope markers from the master resume (300 files, 5.7M records, etc.).
-Every project bullet must have a result signal — either a scope marker (dataset size, record count)
+  Never invent numbers - use only scope markers from the master resume (300 files, 5.7M records, etc.).
+Every project bullet must have a result signal - either a scope marker (dataset size, record count)
 or a functional outcome (what the output enabled, what problem it solved).
 A bullet with no number and no outcome is incomplete.
 
@@ -79,7 +79,7 @@ Example:
   - Applied Method X and Technique Y to accomplish Z.
   - Produced Result R that addressed the core JD requirement.
 
-STEP 3 — EXPERIENCE:
+STEP 3 - EXPERIENCE:
 Always include the most recent internship or work experience from the master resume.
 <EXP_BULLET_INSTRUCTION>
 
@@ -93,18 +93,18 @@ Example:
   - Built X using Y to achieve Z.
   - Implemented A and B to support C.
 
-STEP 4 — SKILLS:
+STEP 4 - SKILLS:
 List only skills that: appear in the selected projects and experience above,
 exist in the master resume, and align with this JD.
-Order items by JD relevance — most important first.
+Order items by JD relevance - most important first.
 Format as exactly these lines, each ending with a full stop:
 <SKILL_GROUPS_INSTRUCTION>
 
-STEP 5 — SUMMARY (written last, based on steps 2 to 4):
+STEP 5 - SUMMARY (written last, based on steps 2 to 4):
 <SUMMARY_INSTRUCTION>
 Must reference something specific from THIS JD. Not generic.
 
-STEP 6 — CERTIFICATIONS (conditional):
+STEP 6 - CERTIFICATIONS (conditional):
 Include only certs directly relevant to this JD. If none, set null.
 Plain list, one per line, no bullets. Maximum 3.
 
@@ -112,7 +112,7 @@ SECTION ORDER:
   Name | Contact | Summary | Technical Skills | Professional Experience
   Academic Projects | Education | Certifications (only if not null)
 
-OUTPUT JSON — output nothing except this JSON structure:
+OUTPUT JSON - output nothing except this JSON structure:
 {
   "name":             "<USER_NAME_PLACEHOLDER>",
   "contact":          "<USER_CONTACT_PLACEHOLDER>",
@@ -149,8 +149,8 @@ def _build_tailor_system(fmt=None) -> str:
         )
     page_note = (
         f"This resume must fit {fmt.max_pages} page{'s' if fmt.max_pages > 1 else ''}. "
-        + ("Do NOT limit to one page — multi-page formats expect detail."
-            if fmt.max_pages > 1 else "Strict one-page limit — every word must earn its place.")
+        + ("Do NOT limit to one page - multi-page formats expect detail."
+            if fmt.max_pages > 1 else "Strict one-page limit - every word must earn its place.")
         )
     proj_count_instr = (
         f"Select exactly {fmt.max_projects} projects that most strongly align with the JD. "
@@ -158,20 +158,20 @@ def _build_tailor_system(fmt=None) -> str:
         )
 
     if fmt.skill_groups_fixed:
-        # Template specified exact group names — use them as-is
+        # Template specified exact group names - use them as-is
         sg_lines = "\n".join(
             f"  {g}: [items ordered by JD relevance]." for g in fmt.skill_groups
         )
         sg_instruction = (
-            f"Use EXACTLY these {len(fmt.skill_groups)} group names — do not rename or add groups:\n{sg_lines}"
+            f"Use EXACTLY these {len(fmt.skill_groups)} group names - do not rename or add groups:\n{sg_lines}"
         )
     else:
-        # Template didn't specify groups — derive from selected content
+        # Template didn't specify groups - derive from selected content
         suggested = "\n".join(f"  {g}" for g in fmt.skill_groups)
         sg_instruction = (
             f"Create {len(fmt.skill_groups)} skill group lines based on the skills actually "
             f"present in the experience and projects you selected above.\n"
-            f"Name each group to reflect what it actually contains — do not use a group name "
+            f"Name each group to reflect what it actually contains - do not use a group name "
             f"if that category has fewer than 2 skills.\n"
             f"Suggested group names (adapt as needed):\n{suggested}\n"
             f"Each line format: GroupName: item1, item2, item3."
@@ -204,16 +204,16 @@ def tailor_user(
     correction_notes: str = "",
 ) -> str:
     correction_block = (
-        f"\n\nCORRECTION NOTES FROM PREVIOUS ATTEMPT — fix every item:\n{correction_notes}"
+        f"\n\nCORRECTION NOTES FROM PREVIOUS ATTEMPT - fix every item:\n{correction_notes}"
         if correction_notes else ""
     )
     return f"""\
-MASTER RESUME — source of truth, use only this:
+MASTER RESUME - source of truth, use only this:
 ---
 {master_resume}
 ---
 
-FORMAT TEMPLATE — follow this structure:
+FORMAT TEMPLATE - follow this structure:
 ---
 {format_template}
 ---
@@ -254,7 +254,7 @@ Check ONLY these factual categories:
 4. METRICS/AWARDS: Are specific numbers, GPA, medals, or awards in the master resume?
 5. CERTIFICATIONS: Are listed certifications present in the master resume?
 
-IMPORTANT — do NOT flag:
+IMPORTANT - do NOT flag:
 - Rewording, paraphrasing, or reordering of content from the master resume.
 - Emphasising one aspect of a role over another.
 - Synonyms for skills (e.g. "ETL pipeline" for something described differently).
@@ -276,7 +276,7 @@ Output ONLY valid JSON:
 }
 
 If zero issues: passed=true, issues=[], correction_prompt="".
-Be conservative — only flag clear fabrications, not judgment calls.
+Be conservative - only flag clear fabrications, not judgment calls.
 """
 
 
