@@ -131,7 +131,25 @@ def _build_tailor_system(fmt=None) -> str:
     if fmt is None:
         fmt = FormatParams()
 
-    sg_lines = "\n".join(f"  {g}: [items ordered by JD relevance]." for g in fmt.skill_groups)
+    if fmt.skill_groups_fixed:
+    # Template specified exact group names — use them as-is
+    sg_lines = "\n".join(
+        f"  {g}: [items ordered by JD relevance]." for g in fmt.skill_groups
+    )
+    sg_instruction = (
+        f"Use EXACTLY these {len(fmt.skill_groups)} group names — do not rename or add groups:\n{sg_lines}"
+    )
+else:
+    # Template didn't specify groups — derive from selected content
+    suggested = "\n".join(f"  {g}" for g in fmt.skill_groups)
+    sg_instruction = (
+        f"Create {len(fmt.skill_groups)} skill group lines based on the skills actually "
+        f"present in the experience and projects you selected above.\n"
+        f"Name each group to reflect what it actually contains — do not use a group name "
+        f"if that category has fewer than 2 skills.\n"
+        f"Suggested group names (adapt as needed):\n{suggested}\n"
+        f"Each line format: GroupName: item1, item2, item3."
+    )
     proj_bullet_instr = (
         f"Write EXACTLY {fmt.project_bullets} bullet points per project. "
         "Each bullet max 15 words."
@@ -159,7 +177,7 @@ def _build_tailor_system(fmt=None) -> str:
         .replace('"<USER_NAME_PLACEHOLDER>"',    f'"{config.USER_NAME}"')
         .replace('"<USER_CONTACT_PLACEHOLDER>"', f'"{config.USER_CONTACT}"')
         .replace('{config.EXPERIENCE_LEVEL}',    config.EXPERIENCE_LEVEL)
-        .replace('<SKILL_GROUPS_LINES>',         sg_lines)
+        .replace('<SKILL_GROUPS_INSTRUCTION>',   sg_instruction)
         .replace('<PROJ_BULLET_INSTRUCTION>',    proj_bullet_instr)
         .replace('<EXP_BULLET_INSTRUCTION>',     exp_bullet_instr)
         .replace('<SUMMARY_INSTRUCTION>',        summary_instr)
