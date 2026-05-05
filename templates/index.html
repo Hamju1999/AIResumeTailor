@@ -435,9 +435,9 @@
       <div class="card">
         <div class="card-title">Pipeline mode</div>
         <div class="tabs">
-          <div class="tab active" data-tab="scrape">Full Scrape</div>
-          <div class="tab" data-tab="custom">Job Links</div>
-          <div class="tab" data-tab="paste">Job Description</div>
+          <div class="tab active" data-tab="scrape">Full scrape</div>
+          <div class="tab" data-tab="custom">My job links</div>
+          <div class="tab" data-tab="paste">Job description text</div>
         </div>
 
         <!-- Full scrape tab -->
@@ -532,7 +532,7 @@
             </tr>
           </thead>
           <tbody id="resultsTbody">
-            <tr><td colspan="6"><div class="empty"><div class="empty-icon">📭</div>No results yet. Run the pipeline first.</div></td></tr>
+            <tr><td colspan="7"><div class="empty"><div class="empty-icon">📭</div>No results yet. Run the pipeline first.</div></td></tr>
           </tbody>
         </table>
       </div>
@@ -767,7 +767,7 @@ function updateResultsPanel(state) {
   // Results table
   const tbody = document.getElementById('resultsTbody');
   if (!state.results?.length) {
-    tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><div class="empty-icon">📭</div>No passed results.</div></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty"><div class="empty-icon">📭</div>No passed results.</div></td></tr>';
   } else {
     tbody.innerHTML = state.results.map(r => `
       <tr>
@@ -830,8 +830,13 @@ async function loadHistory() {
     </div>`;
   }).join('');
 }
+  
+// ── Utilities ──────────────────────────────────────────────────────────────
+function escHtml(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 
-// ── ATS Scanner ────────────────────────────────────────────────────────────
+// ── ATS Scanner ───────────────────────────────────────────────────────────────
 async function scanATS(runId, jobId, btn) {
   btn.textContent = '…';
   btn.disabled = true;
@@ -847,26 +852,23 @@ async function scanATS(runId, jobId, btn) {
       const threshold = data.threshold || 75;
       const status = data.above_threshold
         ? `<div style="color:var(--success);font-size:10px;margin-top:2px">✓ Above ${threshold}% target</div>`
-        : `<div style="color:var(--danger);font-size:10px;margin-top:2px">✗ Below ${threshold}% target - rerun recommended</div>`;
+        : `<div style="color:var(--danger);font-size:10px;margin-top:2px">✗ Below ${threshold}% — rerun recommended</div>`;
+      const hscore = data.hard_skill_score != null
+        ? `<div style="color:var(--muted);font-size:10px">Hard skills: ${data.hard_skill_score}%</div>`
+        : '';
       const missing = data.missing?.length
         ? `<div style="color:var(--warn);margin-top:3px">Missing: ${data.missing.map(escHtml).join(', ')}</div>`
         : '';
       box.innerHTML = `
         <span style="font-size:18px;font-weight:700;color:${color}">${data.score}%</span>
         <span style="color:var(--muted);margin-left:4px">match</span>
-        ${status}
-        ${missing}`;
+        ${status}${hscore}${missing}`;
     }
     box.style.display = 'block';
   } catch(e) {
     btn.textContent = 'Scan';
     btn.disabled = false;
   }
-}
-  
-// ── Utilities ──────────────────────────────────────────────────────────────
-function escHtml(s) {
-  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────
