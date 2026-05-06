@@ -89,11 +89,19 @@ def _fallback_extract(jd_text: str) -> dict:
     hard += list(set(re.findall(r"\b[A-Z]{2,6}\b", text)))[:10]
     return {"hard_skills": hard, "soft_skills": [], "phrases": [], "synonyms": {}}
 
-def _hit(kw: str, res_norm: str) -> bool:
+def _hit(kw, res_norm):
     if not kw or len(kw) < 2:
         return False
     if " " in kw:
-        return kw in res_norm
+        # Exact phrase match first
+        if kw in res_norm:
+            return True
+        # For two-word phrases: check if both words appear nearby (within 60 chars)
+        words = kw.split()
+        if len(words) == 2:
+            w1, w2 = re.escape(words[0][:5]), re.escape(words[1][:5])
+            return bool(re.search(rf"{w1}.{{0,60}}{w2}|{w2}.{{0,60}}{w1}", res_norm))
+        return False
     return bool(re.search(r"\b" + re.escape(kw) + r"\b", res_norm))
 
 # Main scoring function 
