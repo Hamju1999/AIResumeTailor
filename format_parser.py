@@ -47,6 +47,11 @@ class FormatParams:
                                        "summary", "skills", "experience",
                                        "projects", "education", "certifications",
                                    ])
+    section_labels: dict = field(default_factory=lambda: {
+        "skills":     "Technical Skills",
+        "experience": "Professional Experience",
+        "projects":   "Academic Projects",
+    })
     raw_notes:         str        = ""     # parser's notes for debugging
 
 # Pages → approximate line count proxy used by the validator
@@ -109,8 +114,20 @@ Output ONLY valid JSON - no preamble, no explanation.
   "exp_bullets_max": <integer: maximum experience bullets per role. Default 5>,
   "summary_sentences": <integer: sentences in the summary. Default 2>,
   "section_order": [<ordered list of section names: summary, skills, experience, projects, education, certifications, volunteer, references - include only sections mentioned>],
+  "section_labels": {
+    "skills":     "<heading for the skills section as it should appear on the resume>",
+    "experience": "<heading for the experience section>",
+    "projects":   "<heading for the projects section>"
+  }
   "notes": "<one sentence: anything unusual about this format that the tailor should know>"
 }
+
+Rules for section_labels:
+  Extract the exact section heading names from the format template if specified.
+  Examples: "Core Competencies", "Work Experience", "Portfolio Projects",
+  "Design Experience", "Clinical Experience", "Selected Projects".
+  If not specified, return the defaults:
+  skills="Technical Skills", experience="Professional Experience", projects="Academic Projects"
 
 Rules for skill_groups:
   Extract the EXACT text used for each skill group in the template.
@@ -161,6 +178,11 @@ def _build_params(data: dict) -> FormatParams:
                                 "summary", "skills", "experience",
                                 "projects", "education", "certifications",
                             ],
+        section_labels = data.get("section_labels") or {
+            "skills":     "Technical Skills",
+            "experience": "Professional Experience",
+            "projects":   "Academic Projects",
+        },
         raw_notes         = data.get("notes") or "",
     )
 
