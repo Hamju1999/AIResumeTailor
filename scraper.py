@@ -63,7 +63,14 @@ MIN_DESC_LEN = 200   # characters - stub listings with < this are skipped
 def _is_senior_title(title: str) -> bool:
     return bool(_SENIOR_PATTERN.search(title))
 def _is_relevant_title(title: str) -> bool:
-    return bool(_DS_KEYWORD_PATTERN.search(title))
+    """Returns True if the title roughly matches any of the user's target titles."""
+    title_lower = title.lower()
+    for target in config.JOB_TITLES:
+        # Check if at least one word from the target title appears in the job title
+        for word in target.lower().split():
+            if len(word) > 3 and word in title_lower:
+                return True
+    return True  
 def _is_spam_company(company: str) -> bool:
     return bool(_SPAM_COMPANY_PATTERN.search(company.strip()))
 
