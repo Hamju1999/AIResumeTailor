@@ -40,53 +40,73 @@ Before writing anything, carefully read the full job description and note:
       Entry = intern/grad tone, concrete scope markers, no inflated seniority.
       Mid = owns a domain, leads small work, delivers independently.
       Senior = leads teams/systems, strategic scope acceptable.
-  (f) ATS KEYWORD AUDIT — mandatory before writing any section:
-      Read the JD and list every specific technical term, method name, and
-      domain phrase it uses. Then for EACH term ask:
-        "Does the master resume contain work that this term describes?"
-      If yes — you MUST use that exact JD term somewhere in your output.
-      This is vocabulary alignment, not fabrication. Examples:
-        JD says "data aggregation" → your ETL work aggregates data → write "data aggregation"
-        JD says "data mining" → your regression/PCA/classification work is data mining → write "data mining"
-        JD says "quantitative and qualitative" → your statistical analysis uses both → write those words
-        JD says "quality improvement" → your data quality work improves quality → write "quality improvement"
-        JD says "quality metrics" → your validation checks are quality metrics → write "quality metrics"
-        JD says "presentations" → your visualizations and reports are for presentations → write "presentations"
-        JD says "documentation" → your schemas, reports, and structured outputs are documentation → write "documentation"
-        JD says "data warehouse" → your unified master dataset is a data warehouse → write "data warehouse"
-        JD says "analytical requirements" → you define requirements before analysis → write "analytical requirements"
-      The ATS does not know that "ETL pipeline" and "data aggregation" are the same thing.
-      You must use the JD's exact words whenever they honestly describe the work.
-      Target: every hard skill and domain phrase in the JD that the master resume supports
-      must appear at least once in your output.
-      SOFT SKILLS — apply the same audit to competencies and methodologies:
-      Read every soft skill and analytical competency listed in the JD requirements.
-      If the master resume contains evidence of that competency — even implicitly —
-      use the JD's exact term for it somewhere in the resume. Examples:
-        JD says "critical thinking" → your model diagnostics and feature selection required
-          critical thinking → use the phrase "critical thinking" in a bullet or summary.
-        JD says "problem solving" → your debugging, validation, and pipeline fixes are
-          problem solving → use "problem solving" explicitly.
-        JD says "decision making" → your model selection, feature engineering decisions,
-          and threshold choices are decision making → write "decision making".
-        JD says "collaboration and teamwork" → your cross-functional reporting and
-          stakeholder outputs demonstrate collaboration → write "collaboration".
-        JD says "troubleshooting" → your data quality debugging and validation checks
-          are troubleshooting → write "troubleshooting".
-        JD says "analytical" → your quantitative analysis work is analytical → write
-          "analytical" or "analytical requirements" in context.
-        JD says "organizational skills" → your ETL pipeline structure and documentation
-          demonstrate organizational skills → include it.
-      These are not buzzwords — they are the exact terms ATS systems scan for.
-      A resume that says "debugged data quality issues" scores zero for "troubleshooting".
-      A resume that says "worked with cross-functional teams" scores zero for "collaboration".
-      Use the JD's exact words when the underlying work genuinely supports it.
-      Soft skill terms can appear naturally in:
-        - Summary sentences ("applying critical thinking and problem solving...")
-        - Experience bullets ("collaborated with researchers to define analytical requirements...")
-        - Skills section if the format supports a competencies group
-      Maximum 4-5 soft skill terms total — only the ones most prominent in the JD.
-      Do not stuff every possible soft skill — prioritise what the JD repeats or emphasises.
+  (f) ATS PRE-WRITE AUDIT — complete this before writing a single section:
+
+      STEP F1 — EXTRACT JD TERMS:
+      Read the full job description. Identify two lists:
+        List A — Hard terms: every specific tool, platform, method, certification,
+                 system, software, and technical phrase the JD names explicitly.
+                 These vary by field:
+                   Data/Analytics: SQL, data warehouse, data mining, SSRS, HIPAA
+                   Engineering:    AutoCAD, structural analysis, load calculations, FEA
+                   Architecture:   Revit, BIM, IBC code compliance, schematic design
+                   Software:       REST API, CI/CD, Kubernetes, microservices
+                   Healthcare:     EHR, HL7, FHIR, IRB, clinical outcomes
+                 Extract whatever hard terms THIS JD contains — do not assume a field.
+        List B — Soft terms: every competency, methodology, and work style the JD
+                 lists under requirements, responsibilities, or minimum qualifications.
+                 Examples across fields: critical thinking, collaboration, problem solving,
+                 decision making, troubleshooting, stakeholder communication,
+                 cross-functional teamwork, attention to detail, analytical thinking.
+
+      STEP F2 — MAP EACH TERM TO MASTER RESUME EVIDENCE:
+      For every term in List A and List B, ask:
+        "Does the master resume contain work that this term honestly describes?"
+      If yes → COMMIT it. That term goes in the output.
+      If no  → skip it. Never fabricate.
+      This is vocabulary alignment, not invention. The same work can be described
+      with the employer's words or your own words — always use the employer's words.
+
+      STEP F3 — PLACE COMMITTED TERMS BEFORE WRITING:
+      Before writing any section, decide where each committed term goes:
+        Summary     → 3-5 terms that define the match between your background
+                      and this specific role and field
+        Skills      → all committed hard terms that are tools, platforms, methods
+        Experience  → committed terms that describe work done in the listed role
+        Projects    → committed terms that describe work done in the listed projects
+      Every committed term must appear at least once. If a term has no obvious
+      home, place it in the summary or add it naturally to a skills line.
+
+      STEP F4 — VOCABULARY LOCK (field-agnostic rules):
+      The ATS does not understand synonyms. For every committed term, use the
+      JD's exact wording — not a paraphrase, not an equivalent, not an abbreviation
+      unless the JD itself uses that abbreviation.
+
+      Apply these universal substitution rules:
+        If the JD uses a specific noun phrase (e.g. "data warehouse", "structural
+          analysis", "building information modeling", "load testing") — use that
+          exact phrase, not a near-equivalent.
+        If the JD uses a verb form (e.g. "troubleshooting", "collaborating",
+          "documenting") — use that verb form, not "fixed issues" or "worked with".
+        If the JD lists a soft skill by name (e.g. "critical thinking", "decision
+          making", "problem solving") — use those exact words in at least one bullet
+          or in the summary. Do not describe the skill without naming it.
+        If the JD names a tool or platform — name it exactly. Do not describe what
+          it does instead of naming it.
+        If the JD repeats a term more than twice — that term is high priority. It
+          must appear in the resume at least twice (summary + one other section).
+
+      To apply STEP F4 correctly, do this for each committed term:
+        1. Write down the JD's exact wording for this term.
+        2. Write down how your draft currently describes this concept.
+        3. If they differ — replace your wording with the JD's wording.
+
+      STEP F5 — SELF-CHECK BEFORE OUTPUTTING JSON:
+      Count committed terms. Count how many appear in your draft.
+      If fewer than 80% of committed terms appear — revise before outputting.
+      Identify which committed terms are missing, then add each one naturally
+      to the weakest bullet in the most relevant section.
+      Only output the JSON when 80%+ of committed terms are present.
 Every section you write must reflect this analysis.
 
 STEP 1 - EDUCATION (fixed):
