@@ -8,8 +8,7 @@ so that any user's information is inserted without hardcoding.
 from __future__ import annotations
 import config
 
-# ── Tailor Agent ──────────────────────────────────────────────────────────────
-
+# Tailor Agent
 TAILOR_SYSTEM = """You are an expert resume writer for data science and AI/ML roles.
 Produce a concise, honest, resume uniquely tailored to the job description,
 using ONLY information present in the master resume.
@@ -128,13 +127,11 @@ OUTPUT JSON - output nothing except this JSON structure:
 }
 """
 
-
 def _build_tailor_system(fmt=None) -> str:
     """Build tailor prompt with dynamic params from format template parser."""
     from format_parser import FormatParams
     if fmt is None:
         fmt = FormatParams()
-        
     proj_bullet_instr = (
         f"Write EXACTLY {fmt.project_bullets} bullet points per project. "
         "Each bullet max 15 words."
@@ -156,7 +153,6 @@ def _build_tailor_system(fmt=None) -> str:
         f"Select exactly {fmt.max_projects} projects that most strongly align with the JD. "
         "If fewer clearly align, pick the strongest and add the next closest."
         )
-
     if fmt.skill_groups_fixed:
         # Template specified exact group names - use them as-is
         sg_lines = "\n".join(
@@ -176,7 +172,6 @@ def _build_tailor_system(fmt=None) -> str:
             f"Suggested group names (adapt as needed):\n{suggested}\n"
             f"Each line format: GroupName: item1, item2, item3."
         )
-
     return (
         TAILOR_SYSTEM
         .replace('"<USER_NAME_PLACEHOLDER>"',    f'"{config.USER_NAME}"')
@@ -194,7 +189,6 @@ def _build_tailor_system(fmt=None) -> str:
         .replace('<EXP_MAX>',                    str(fmt.exp_bullets_max))
     )
 
-
 def tailor_user(
     master_resume: str,
     job_description: str,
@@ -208,33 +202,31 @@ def tailor_user(
         if correction_notes else ""
     )
     return f"""\
-MASTER RESUME - source of truth, use only this:
----
-{master_resume}
----
+      MASTER RESUME - source of truth, use only this:
+      ---
+      {master_resume}
+      ---
+      
+      FORMAT TEMPLATE - follow this structure:
+      ---
+      {format_template}
+      ---
+      
+      JOB DETAILS:
+      Company:   {company}
+      Job Title: {job_title}
+      
+      JOB DESCRIPTION:
+      ---
+      {job_description}
+      ---
+      {correction_block}
+      
+      Follow the build order. Project bullets: 3 per project, start with '- ', max 15 words each. \
+      Experience bullets: 4-5, start with '- ', max 15 words each. Output the JSON resume only.\
+      """
 
-FORMAT TEMPLATE - follow this structure:
----
-{format_template}
----
-
-JOB DETAILS:
-Company:   {company}
-Job Title: {job_title}
-
-JOB DESCRIPTION:
----
-{job_description}
----
-{correction_block}
-
-Follow the build order. Project bullets: 3 per project, start with '- ', max 15 words each. \
-Experience bullets: 4-5, start with '- ', max 15 words each. Output the JSON resume only.\
-"""
-
-
-# ── Verifier ──────────────────────────────────────────────────────────────────
-
+# Verifier 
 VERIFIER_SYSTEM = """\
 You are a strict resume fact-checker. Your ONLY job is to verify that every factual
 claim in the tailored resume is directly supported by the master resume.
@@ -279,29 +271,27 @@ If zero issues: passed=true, issues=[], correction_prompt="".
 Be conservative - only flag clear fabrications, not judgment calls.
 """
 
-
 def verifier_user(
     tailored_resume_json: str,
     master_resume: str,
     job_description: str = "",
 ) -> str:
     return f"""\
-MASTER RESUME (ground truth):
----
-{master_resume}
----
-
-TAILORED RESUME TO VERIFY (JSON):
----
-{tailored_resume_json}
----
-
-Check every factual claim against the master resume. \
-Only flag content completely absent from the master resume. \
-Rewording and emphasis changes are acceptable. \
-Output the verification JSON.\
-"""
-
+      MASTER RESUME (ground truth):
+      ---
+      {master_resume}
+      ---
+      
+      TAILORED RESUME TO VERIFY (JSON):
+      ---
+      {tailored_resume_json}
+      ---
+      
+      Check every factual claim against the master resume. \
+      Only flag content completely absent from the master resume. \
+      Rewording and emphasis changes are acceptable. \
+      Output the verification JSON.\
+      """
 
 def get_tailor_system(fmt=None) -> str:
     """Returns the tailor system prompt with all dynamic params injected."""
