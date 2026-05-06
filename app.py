@@ -172,6 +172,7 @@ def api_run():
             "results": [], "failures": [], "total": 0,
             "passed": 0, "failed": 0,
             "started": datetime.now().isoformat(), "finished": None,
+            "include_certs": include_certs,
         })
     while not _log_queue.empty():
         try:
@@ -284,7 +285,7 @@ def api_history():
     return jsonify(runs)
 
 # Pipeline runner
-def _run_pipeline(custom_urls: list[str], limit: int, paste_jd: str = "", paste_title: str = "", paste_company: str = "") -> None:
+def _run_pipeline(custom_urls: list[str], limit: int, paste_jd: str = "", paste_title: str = "", paste_company: str = "", include_certs: bool = False) -> None:
     log = logging.getLogger("ui.runner")
     try:
         if paste_jd:
@@ -388,7 +389,7 @@ async def _run_custom_urls(urls: list[str]):
     pl._run_id = run_id
     results, failures = [], []
     for i, job in enumerate(jobs):
-        outcome = await pl._process_job(job)
+        outcome = await pl._process_job(job, include_certs=_run_state.get("include_certs", False))
         if hasattr(outcome, "resume_path"):
             results.append(outcome)
         else:
@@ -425,7 +426,7 @@ async def _run_paste_jd(jd_text: str, title: str, company: str):
     log.info(f"Processing pasted JD: {title} @ {company}")
     run_id = uuid.uuid4().hex[:8]
     pl._run_id = run_id
-    outcome = await pl._process_job(job)
+    outcome = await pl._process_job(job, include_certs=_run_state.get("include_certs", False))
     results  = [outcome] if hasattr(outcome, "resume_path") else []
     failures = [outcome] if not hasattr(outcome, "resume_path") else []
     from models import PipelineRun
