@@ -52,23 +52,25 @@ CONTACT_LINKS = {
 }
 
 # Entry point 
-def build_docx(resume: TailoredResume, output_path: Path) -> Path:
+def build_docx(resume: TailoredResume, output_path: Path, fmt=None) -> Path:
+    from format_parser import FormatParams
+    if fmt is None:
+        fmt = FormatParams()
+    labels = getattr(fmt, "section_labels", {})
+    lbl_skills     = labels.get("skills",     "Technical Skills")
+    lbl_experience = labels.get("experience", "Professional Experience")
+    lbl_projects   = labels.get("projects",   "Academic Projects")
     output_path.parent.mkdir(parents=True, exist_ok=True)
     doc = Document()
     _set_margins(doc)
     _clear_styles(doc)
     _name_line(doc, resume.name)
     _contact_line(doc, resume.contact)
-    _section(doc, "Summary",                 resume.summary,
-             lambda d, c: _render_paragraph(d, c))
-    _section(doc, "Technical Skills",        resume.skills,
-             lambda d, c: _render_skills(d, c))
-    _section(doc, "Professional Experience", resume.experience,
-             lambda d, c: _render_narrative(d, c, colon=False))
-    _section(doc, "Academic Projects",       resume.projects,
-             lambda d, c: _render_narrative(d, c, colon=True))
-    _section(doc, "Education",               resume.education,
-             lambda d, c: _render_education(d, c))
+    _section(doc, "Summary", resume.summary,lambda d, c: _render_paragraph(d, c))
+    _section(doc, lbl_skills,      resume.skills,      lambda d, c: _render_skills(d, c))
+    _section(doc, lbl_experience,  resume.experience,  lambda d, c: _render_narrative(d, c, colon=False))
+    _section(doc, lbl_projects,    resume.projects,    lambda d, c: _render_narrative(d, c, colon=True))
+    _section(doc, "Education", resume.education, lambda d, c: _render_education(d, c))
     if resume.certifications and resume.certifications.strip():
         _section(doc, "Certifications", resume.certifications,
                  lambda d, c: _render_certifications(d, c))
