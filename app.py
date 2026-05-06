@@ -7,7 +7,6 @@ Subsequent runs: goes straight to the main UI.
 """
 
 from __future__ import annotations
-
 import asyncio
 import json
 import logging
@@ -166,6 +165,7 @@ def api_run():
     paste_jd:      str = data.get("paste_jd", "").strip()
     paste_title:   str = data.get("paste_title", "Job").strip()
     paste_company: str = data.get("paste_company", "Company").strip()
+    include_certs: bool = bool(data.get("include_certs", False))
     with _state_lock:
         _run_state.update({
             "status": "running", "run_id": None, "logs": [],
@@ -178,7 +178,7 @@ def api_run():
             _log_queue.get_nowait()
         except queue.Empty:
             break
-    thread = threading.Thread(target=_run_pipeline, args=(custom_urls, limit, paste_jd, paste_title, paste_company), daemon=True)
+    thread = threading.Thread(target=_run_pipeline, args=(custom_urls, limit, paste_jd, paste_title, paste_company, include_certs), daemon=True)
     thread.start()
     return jsonify({"ok": True})
 
@@ -198,7 +198,6 @@ def api_logs_stream():
                 yield ": keepalive\n\n"
     return Response(generate(), mimetype="text/event-stream",
                     headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
-
 
 @app.route("/api/download/<run_id>/<file_type>")
 def api_download(run_id: str, file_type: str):
@@ -285,7 +284,6 @@ def api_history():
     return jsonify(runs)
 
 # Pipeline runner
-
 def _run_pipeline(custom_urls: list[str], limit: int, paste_jd: str = "", paste_title: str = "", paste_company: str = "") -> None:
     log = logging.getLogger("ui.runner")
     try:
