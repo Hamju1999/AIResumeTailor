@@ -7,7 +7,6 @@ Pipeline Orchestrator - fixed:
 """
 
 from __future__ import annotations
-
 import asyncio
 import csv
 import logging
@@ -15,7 +14,6 @@ import uuid
 import zipfile
 from datetime import datetime
 from pathlib import Path
-
 import config
 import scraper
 import tailor
@@ -29,32 +27,24 @@ import format_parser
 from format_parser import FormatParams
 from grammar_fixer import fix_grammar
 from calibrator import calibrate
-
 log = logging.getLogger("pipeline")
-
 _master_resume:   str = ""
 _format_template: str = ""
 _run_id:          str = ""   # set once in run(), read everywhere
 
-
-# ── Content loading ───────────────────────────────────────────────────────────
-
+# Content loading 
 async def load_content() -> None:
     global _master_resume, _format_template
-
-    for attr, path in [("_master_resume", config.MASTER_RESUME_PATH),
-                       ("_format_template", config.FORMAT_TEMPLATE_PATH)]:
+    for attr, path in [("_master_resume", config.MASTER_RESUME_PATH), ("_format_template", config.FORMAT_TEMPLATE_PATH)]:
         p = Path(path)
         if not p.exists():
             raise FileNotFoundError(f"{attr} file not found: {p}")
         globals()[attr] = _load_file(p)
-
     log.info(f"Master resume loaded ({len(_master_resume):,} chars)")
     log.info(f"Format template loaded ({len(_format_template):,} chars)")
     # Parse format template to extract dynamic parameters
     global _format_params
     _format_params = await format_parser.parse(_format_template)
-
 
 def _load_file(p: Path) -> str:
     if p.suffix.lower() == ".pdf":
@@ -62,40 +52,31 @@ def _load_file(p: Path) -> str:
         return pdf_reader.extract_text(p)
     return p.read_text(encoding="utf-8").strip()
 
-
-# ── Main entry point ──────────────────────────────────────────────────────────
-
+# Main entry point 
 async def run() -> PipelineRun:
     global _run_id
     await load_content()
-
     _run_id = uuid.uuid4().hex[:8]
     started = datetime.utcnow()
-
     log.info(f"=== Pipeline run {_run_id} started ===")
-
     # Phase 1+2
     jobs: list[Job] = await scraper.discover_jobs()
     log.info(f"Processing {len(jobs)} jobs through Phases 3-5 ...")
-
     # Phase 3-5: SEQUENTIAL - one job at a time to respect 30k tokens/min limit.
     # Each job makes 3 LLM calls × ~10k tokens = ~30k tokens. Running in parallel
     # blows the rate limit immediately. Sequential with a small inter-job pause
     # keeps us under the limit without throttling retries.
     results:  list[JobResult] = []
     failures: list[FailedJob] = []
-
     for i, job in enumerate(jobs):
         outcome = await _process_job(job)
         if isinstance(outcome, JobResult):
             results.append(outcome)
         else:
             failures.append(outcome)
-
         # Brief pause between jobs to let the token-per-minute window breathe
         if i < len(jobs) - 1:
             await asyncio.sleep(config.INTER_JOB_DELAY_SEC)
-
     manifest = PipelineRun(
         run_id=_run_id,
         started_at=started,
@@ -106,7 +87,6 @@ async def run() -> PipelineRun:
         results=results,
         failures=failures,
     )
-
     _save_outputs(manifest)
     log.info(
         f"=== Run {_run_id} complete | "
@@ -114,9 +94,7 @@ async def run() -> PipelineRun:
     )
     return manifest
 
-
-# ── Per-job processing (Phases 3-5) ──────────────────────────────────────────
-
+# Per-job processing (Phases 3-5) 
 async def _process_job(job: Job) -> JobResult | FailedJob:
     """
     Phases 3→4→5 for a single job with retry loop.
@@ -124,7 +102,6 @@ async def _process_job(job: Job) -> JobResult | FailedJob:
     """
     correction_notes = ""
     last_status      = JobStatus.PENDING
-
     for attempt in range(1, config.MAX_RETRIES + 2):
         try:
             # Phase 3 - Tailor
@@ -136,17 +113,13 @@ async def _process_job(job: Job) -> JobResult | FailedJob:
                 correction_notes=correction_notes,
                 fmt=_format_params,
             )
-
             # Auto-fix hyphens and semicolons before any validation.
             resume = _sanitize_resume(resume)
-
             # Grammar fix - corrects punctuation and commas.
             await asyncio.sleep(config.INTER_AGENT_DELAY_SEC)
             resume = await fix_grammar(resume)
             log.debug("Grammar fix applied")
-
             await asyncio.sleep(config.INTER_AGENT_DELAY_SEC)
-
             # Phase 4 - Verify (MUST run before calibration).
             # Calibration rewrites wording; if it runs first, calibrated phrasing
             # gets flagged as fabrication - causing issue counts to grow on retry.
@@ -162,13 +135,10 @@ async def _process_job(job: Job) -> JobResult | FailedJob:
                     job=job, last_status=JobStatus.VERIFYING, attempts=attempt,
                     reason="Verification failed: " + "; ".join(i.claim for i in ver.issues[:2]),
                 )
-
             # Calibration runs AFTER verification - tone/abstraction fix on verified content.
             await asyncio.sleep(config.INTER_AGENT_DELAY_SEC)
             resume = await calibrate(resume, job_description=job.description)
-
             await asyncio.sleep(config.INTER_AGENT_DELAY_SEC)
-
             # Phase 5 - Validate (on calibrated output)
             last_status = JobStatus.VALIDATING
             val = await validator.validate_resume(resume, _format_template, _format_params)
@@ -182,17 +152,14 @@ async def _process_job(job: Job) -> JobResult | FailedJob:
                     job=job, last_status=JobStatus.VALIDATING, attempts=attempt,
                     reason="Validation failed: " + "; ".join(i.description[:80] for i in val.issues[:2]),
                 )
-
             # All passed - build docx
             resume_path = _resume_path(job)
             build_docx(resume, resume_path)
-
             return JobResult(
                 job=job, resume=resume, resume_path=str(resume_path),
                 status=JobStatus.PASSED, attempts=attempt,
                 verification=ver, validation=val,
             )
-
         except Exception as exc:
             log.error(f"Error attempt {attempt} for {job.job_id}: {exc}", exc_info=True)
             if attempt > config.MAX_RETRIES:
@@ -204,24 +171,19 @@ async def _process_job(job: Job) -> JobResult | FailedJob:
             log.info(f"Waiting {wait}s before retry {attempt + 1}...")
             await asyncio.sleep(wait)
             correction_notes = f"Previous attempt raised: {exc}. Fix and retry."
-
     return FailedJob(
         job=job, last_status=last_status, attempts=config.MAX_RETRIES + 1,
         reason="Exhausted all retries.",
     )
 
-
-# ── Output (Phase 6) ──────────────────────────────────────────────────────────
-
+# Output (Phase 6) 
 def _save_outputs(manifest: PipelineRun) -> None:
     config.OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     resume_dir = config.RESUME_DIR / manifest.run_id
-
     # 1. Manifest JSON
     manifest_path = config.OUTPUT_DIR / f"manifest_{manifest.run_id}.json"
     manifest_path.write_text(manifest.model_dump_json(indent=2), encoding="utf-8")
     log.info(f"Manifest → {manifest_path}")
-
     # 2. Job links CSV
     csv_path = config.OUTPUT_DIR / f"job_links_{manifest.run_id}.csv"
     with open(csv_path, "w", newline="", encoding="utf-8") as f:
@@ -236,7 +198,6 @@ def _save_outputs(manifest: PipelineRun) -> None:
             w.writerow(["FAILED", f_.job.title, f_.job.company, f_.job.board,
                         f_.job.location or "", f_.job.job_url, "", f_.attempts])
     log.info(f"Job links CSV → {csv_path}")
-
     # 3. Markdown index
     index_path = config.OUTPUT_DIR / f"index_{manifest.run_id}.md"
     lines = [
@@ -257,7 +218,6 @@ def _save_outputs(manifest: PipelineRun) -> None:
             lines.append(f"- **{f_.job.title}** @ {f_.job.company} - {f_.reason}\n")
     index_path.write_text("\n".join(lines), encoding="utf-8")
     log.info(f"Index → {index_path}")
-
     # 4. Resumes zip - .docx only (PDF removed)
     zip_path = config.OUTPUT_DIR / f"resumes_{manifest.run_id}.zip"
     docx_files = list(resume_dir.glob("*.docx")) if resume_dir.exists() else []
@@ -269,9 +229,7 @@ def _save_outputs(manifest: PipelineRun) -> None:
     else:
         log.warning(f"No .docx files in {resume_dir} - nothing to zip.")
 
-
-# ── Helpers ───────────────────────────────────────────────────────────────────
-
+# Helpers 
 def _resume_path(job: Job) -> Path:
     """Save inside output/resumes/<run_id>/  consistent with zip lookup."""
     safe = lambda s, n: "".join(c if c.isalnum() else "_" for c in s)[:n]
@@ -280,15 +238,12 @@ def _resume_path(job: Job) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     return path
 
-
 def _merge(a: str, b: str) -> str:
     if not a: return b
     if not b: return a
     return f"{a}\n\nAdditional corrections:\n{b}"
 
-
-# ── Text sanitization ─────────────────────────────────────────────────────────
-
+# Text sanitization
 def _sanitize_resume(resume: TailoredResume) -> TailoredResume:
     """
     Auto-remove hyphens (as sentence connectors) and semicolons from all
@@ -302,16 +257,13 @@ def _sanitize_resume(resume: TailoredResume) -> TailoredResume:
     """
     fields = ["summary", "experience", "projects", "skills", "certifications"]
     data = resume.model_dump()
-
     for field in fields:
         val = data.get(field)
         if val and isinstance(val, str):
             val = _fix_hyphens(val)
             val = _fix_semicolons(val)
             data[field] = val
-
     return TailoredResume(**data)
-
 
 # Compound adjectives whose hyphens are grammatically correct - keep them
 _KEEP_HYPHENATED = {
@@ -321,7 +273,6 @@ _KEEP_HYPHENATED = {
     "entry-level", "cross-functional", "open-source", "well-defined",
     "long-term", "short-term", "full-stack",
 }
-
 
 def _fix_hyphens(text: str) -> str:
     """
@@ -339,7 +290,6 @@ def _fix_hyphens(text: str) -> str:
             return full   # keep: end-to-end, large-scale
         return f"{w1} {w2}"   # remove: hands-on, multi-agent
     return _re.sub(r"(\w+)-(\w+)", _replace, text)
-
 
 def _fix_semicolons(text: str) -> str:
     """Replace all semicolons with commas."""
