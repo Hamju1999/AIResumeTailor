@@ -154,7 +154,7 @@ async def _process_job(job: Job, include_certs: bool = False) -> JobResult | Fai
                 )
             # All passed - build docx
             resume_path = _resume_path(job)
-            build_docx(resume, resume_path)
+            build_docx(resume, resume_path, fmt=_format_params)
             return JobResult(
                 job=job, resume=resume, resume_path=str(resume_path),
                 status=JobStatus.PASSED, attempts=attempt,
