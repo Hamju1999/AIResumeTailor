@@ -20,15 +20,12 @@ FormatParams object rather than hardcoded values.
 """
 
 from __future__ import annotations
-
 import logging
 from dataclasses import dataclass, field
-
 log = logging.getLogger("format_parser")
 
-# ── Cached result ─────────────────────────────────────────────────────────────
+# Cached result
 _cached_params: "FormatParams | None" = None
-
 
 @dataclass
 class FormatParams:
@@ -52,10 +49,8 @@ class FormatParams:
                                    ])
     raw_notes:         str        = ""     # parser's notes for debugging
 
-
 # Pages → approximate line count proxy used by the validator
 _PAGE_LINES = {1: 65, 2: 130, 3: 195}
-
 
 async def parse(format_template: str) -> FormatParams:
     """
@@ -66,7 +61,6 @@ async def parse(format_template: str) -> FormatParams:
     global _cached_params
     if _cached_params is not None:
         return _cached_params
-
     params = await _parse_with_llm(format_template)
     _cached_params = params
     log.info(
@@ -77,18 +71,15 @@ async def parse(format_template: str) -> FormatParams:
     )
     return params
 
-
 async def parse_sync(format_template: str) -> FormatParams:
     """Synchronous wrapper for use outside async context."""
     import asyncio
     return asyncio.get_event_loop().run_until_complete(parse(format_template))
 
-
 def reset():
     """Clear the cache. Call this if the format template changes between runs."""
     global _cached_params
     _cached_params = None
-
 
 async def _parse_with_llm(format_template: str) -> FormatParams:
     """Ask Claude to extract structured parameters from the format template."""
@@ -103,7 +94,6 @@ async def _parse_with_llm(format_template: str) -> FormatParams:
     except Exception as e:
         log.warning(f"Format parsing failed ({e}) - using defaults")
         return _infer_from_text(format_template)
-
 
 _PARSER_SYSTEM = """\
 You are a resume format specification parser.
@@ -174,7 +164,6 @@ def _build_params(data: dict) -> FormatParams:
         raw_notes         = data.get("notes") or "",
     )
 
-
 def _infer_from_text(text: str) -> FormatParams:
     """
     Fallback: try to infer key parameters from the format template text
@@ -182,7 +171,6 @@ def _infer_from_text(text: str) -> FormatParams:
     """
     import re
     text_lower = text.lower()
-
     # Page count
     max_pages = 1
     if "2-3 page" in text_lower or "2 to 3 page" in text_lower or "three page" in text_lower:
@@ -191,7 +179,6 @@ def _infer_from_text(text: str) -> FormatParams:
         max_pages = 2
     if "australia" in text_lower or "uk resume" in text_lower or "new zealand" in text_lower:
         max_pages = 3
-
     # Skill groups - look for lines with ":" that seem like group headings
     skill_groups = []
     for line in text.splitlines():
@@ -201,7 +188,6 @@ def _infer_from_text(text: str) -> FormatParams:
             # Heuristic: skill group labels are short and not full sentences
             if 3 < len(label.split()) <= 5 and not re.search(r"[.!?]", label):
                 skill_groups.append(label)
-
     if len(skill_groups) < 2:
         skill_groups = [
             "Programming & Engineering",
@@ -218,13 +204,11 @@ def _infer_from_text(text: str) -> FormatParams:
         "Analytics & Visualization",
     }
     skill_groups_fixed = bool(skill_groups) and set(skill_groups) != defaults
-
     # Project count
     max_projects = 3
     m = re.search(r"(\d+)\s+project", text_lower)
     if m:
         max_projects = min(int(m.group(1)), 6)
-
     return FormatParams(
         max_pages         = max_pages,
         max_lines         = _PAGE_LINES.get(max_pages, 65),
