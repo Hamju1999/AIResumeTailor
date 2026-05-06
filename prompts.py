@@ -185,16 +185,22 @@ def _build_tailor_system(fmt=None) -> str:
             f"Use EXACTLY these {len(fmt.skill_groups)} group names - do not rename or add groups:\n{sg_lines}"
         )
     else:
-        # Template didn't specify groups - derive from selected content
-        suggested = "\n".join(f"  {g}" for g in fmt.skill_groups)
+        # Template didn't specify groups - derive entirely from selected content
         sg_instruction = (
-            f"Create {len(fmt.skill_groups)} skill group lines based on the skills actually "
-            f"present in the experience and projects you selected above.\n"
-            f"Name each group to reflect what it actually contains - do not use a group name "
-            f"if that category has fewer than 2 skills.\n"
-            f"Suggested group names (adapt as needed):\n{suggested}\n"
+            f"Create exactly {len(fmt.skill_groups)} skill group lines.\n"
+            f"The group NAMES must be determined by the skills actually present in the "
+            f"experience and projects you selected above — not by any predefined list.\n"
+            f"Rules for naming groups:\n"
+            f"  - Look at the tools, languages, and methods in your selected content.\n"
+            f"  - Group related skills together and name the group after what it contains.\n"
+            f"  - Examples: if you selected SQL, Postgres, dbt → name that group 'Data Engineering'.\n"
+            f"    If you selected Python, R, Spark → name it 'Programming & Data'.\n"
+            f"    If you selected Tableau, Power BI, Matplotlib → name it 'Analytics & Visualisation'.\n"
+            f"  - Do NOT use 'Programming & Engineering', 'Applied AI & NLP', or "
+            f"'Analytics & Visualization' unless those names genuinely fit the selected content.\n"
+            f"  - Do not include a group if it would have fewer than 2 skills.\n"
             f"Each line format: GroupName: item1, item2, item3."
-        )
+        
     return (
         TAILOR_SYSTEM
         .replace('"<USER_NAME_PLACEHOLDER>"',    f'"{config.USER_NAME}"')
