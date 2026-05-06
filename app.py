@@ -205,9 +205,8 @@ def api_download(run_id: str, file_type: str):
     if not re.match(r"^[a-f0-9]{8}$", run_id):
         return "Invalid run ID", 400
     files = {
-        "csv":   config.OUTPUT_DIR / f"job_links_{run_id}.csv",
-        "zip":   config.OUTPUT_DIR / f"resumes_{run_id}.zip",
-        "index": config.OUTPUT_DIR / f"index_{run_id}.md",
+        "csv":  config.OUTPUT_DIR / f"job_links_{run_id}.csv",
+        "json": config.OUTPUT_DIR / f"manifest_{run_id}.json",
     }
     path = files.get(file_type)
     if not path or not path.exists():
@@ -266,6 +265,22 @@ def api_ats_score(run_id: str, job_id: str):
         "total_checked":    result.total_checked,
         "breakdown":        result.breakdown,
     })
+
+@app.route("/api/download/<run_id>/docx/<job_id>")
+def api_download_docx(run_id: str, job_id: str):
+    if not re.match(r"^[a-f0-9]{8}$", run_id):
+        return "Invalid run ID", 400
+    manifest_path = config.OUTPUT_DIR / f"manifest_{run_id}.json"
+    if not manifest_path.exists():
+        return "Run not found", 404
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    for r in manifest.get("results", []):
+        if r.get("job", {}).get("job_id") == job_id:
+            resume_path = Path(r.get("resume_path", ""))
+            if resume_path.exists():
+                return send_file(str(resume_path), as_attachment=True)
+            return "File not found", 404
+    return "Job not found", 404
 
 @app.route("/api/history")
 def api_history():
