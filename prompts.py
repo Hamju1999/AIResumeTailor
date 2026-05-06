@@ -40,10 +40,25 @@ Before writing anything, carefully read the full job description and note:
       Entry = intern/grad tone, concrete scope markers, no inflated seniority.
       Mid = owns a domain, leads small work, delivers independently.
       Senior = leads teams/systems, strategic scope acceptable.
-  (f) ATS target: the resume must achieve at least 75% keyword match.
-      After selecting content, verify that the most-repeated technical terms
-      in the JD appear at least once in your output. If a key JD term is
-      absent and the master resume supports it, include it.
+  (f) ATS KEYWORD AUDIT — mandatory before writing any section:
+      Read the JD and list every specific technical term, method name, and
+      domain phrase it uses. Then for EACH term ask:
+        "Does the master resume contain work that this term describes?"
+      If yes — you MUST use that exact JD term somewhere in your output.
+      This is vocabulary alignment, not fabrication. Examples:
+        JD says "data aggregation" → your ETL work aggregates data → write "data aggregation"
+        JD says "data mining" → your regression/PCA/classification work is data mining → write "data mining"
+        JD says "quantitative and qualitative" → your statistical analysis uses both → write those words
+        JD says "quality improvement" → your data quality work improves quality → write "quality improvement"
+        JD says "quality metrics" → your validation checks are quality metrics → write "quality metrics"
+        JD says "presentations" → your visualizations and reports are for presentations → write "presentations"
+        JD says "documentation" → your schemas, reports, and structured outputs are documentation → write "documentation"
+        JD says "data warehouse" → your unified master dataset is a data warehouse → write "data warehouse"
+        JD says "analytical requirements" → you define requirements before analysis → write "analytical requirements"
+      The ATS does not know that "ETL pipeline" and "data aggregation" are the same thing.
+      You must use the JD's exact words whenever they honestly describe the work.
+      Target: every hard skill and domain phrase in the JD that the master resume supports
+      must appear at least once in your output.
 Every section you write must reflect this analysis.
 
 STEP 1 - EDUCATION (fixed):
@@ -96,6 +111,9 @@ STEP 4 - SKILLS:
 List only skills that: appear in the selected projects and experience above,
 exist in the master resume, and align with this JD.
 Order items by JD relevance - most important first.
+Within each group, use the JD's exact terminology for skills where possible.
+If the JD says "data modeling" and you know this skill — write "data modeling", not "data modelling".
+If the JD lists specific tools — name them exactly as written in the JD.
 Format as exactly these lines, each ending with a full stop:
 <SKILL_GROUPS_INSTRUCTION>
 
