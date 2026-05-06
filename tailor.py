@@ -18,6 +18,7 @@ async def tailor_resume(
     format_template: str,
     correction_notes: str = "",
     fmt=None,
+    include_certs: bool = False,
 ) -> TailoredResume:
     """
     Call the Tailor Agent and parse the result into a TailoredResume.
@@ -31,6 +32,7 @@ async def tailor_resume(
         job_title=job.title,
         format_template=format_template,
         correction_notes=correction_notes,
+        include_certs=include_certs,
     )
     data = await llm_client.call(
         system=prompts.get_tailor_system(fmt),
