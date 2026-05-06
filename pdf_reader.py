@@ -7,12 +7,9 @@ so a single bad page doesn't blow up the whole read.
 """
 
 from __future__ import annotations
-
 import logging
 from pathlib import Path
-
 log = logging.getLogger("pdf_reader")
-
 
 def extract_text(pdf_path: Path) -> str:
     """
@@ -23,7 +20,6 @@ def extract_text(pdf_path: Path) -> str:
     """
     if not pdf_path.exists():
         raise FileNotFoundError(f"PDF not found: {pdf_path}")
-
     try:
         import pypdf  # type: ignore
     except ImportError:
@@ -31,11 +27,9 @@ def extract_text(pdf_path: Path) -> str:
             "pypdf is required to read PDFs.\n"
             "Install it with:  pip install pypdf"
         )
-
     reader = pypdf.PdfReader(str(pdf_path))
     total_pages = len(reader.pages)
     log.info(f"Reading PDF: {pdf_path.name} ({total_pages} pages)")
-
     extracted: list[str] = []
     for i, page in enumerate(reader.pages):
         try:
@@ -47,7 +41,6 @@ def extract_text(pdf_path: Path) -> str:
                 log.debug(f"  Page {i+1}: no text extracted (image-only page?)")
         except Exception as e:
             log.warning(f"  Page {i+1}: extraction error - {e}")
-
     if not extracted:
         raise RuntimeError(
             f"No text could be extracted from {pdf_path.name}.\n"
@@ -55,7 +48,6 @@ def extract_text(pdf_path: Path) -> str:
             "Try opening in Adobe Acrobat → File → Export → Text, "
             "or use an online PDF-to-text converter and save the result as .txt."
         )
-
     full_text = "\n\n".join(extracted)
     log.info(f"  Extracted {len(full_text):,} characters from {pdf_path.name}")
     return full_text
