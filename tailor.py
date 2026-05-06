@@ -6,15 +6,11 @@ Accepts optional correction notes on retry attempts.
 """
 
 from __future__ import annotations
-
 import logging
-
 import llm_client
 import prompts
 from models import Job, TailoredResume
-
 log = logging.getLogger("tailor")
-
 
 async def tailor_resume(
     job: Job,
@@ -28,7 +24,6 @@ async def tailor_resume(
     Raises on JSON parse failure - let the pipeline handle retries.
     """
     log.info(f"Tailoring: {job.title} @ {job.company}")
-
     user_msg = prompts.tailor_user(
         master_resume=master_resume,
         job_description=job.description,
@@ -37,13 +32,11 @@ async def tailor_resume(
         format_template=format_template,
         correction_notes=correction_notes,
     )
-
     data = await llm_client.call(
         system=prompts.get_tailor_system(fmt),
         user=user_msg,
         expect_json=True,
     )
-
     return TailoredResume(
         name=data.get("name", ""),
         contact=data.get("contact", ""),
