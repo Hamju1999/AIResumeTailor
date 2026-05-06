@@ -518,11 +518,10 @@
 
       <!-- Download bar -->
       <div class="card" id="downloadCard" style="display:none">
-        <div class="card-title">Downloads</div>
+        <div class="card-title">Run outputs</div>
         <div class="flex gap-2">
-          <button class="btn btn-ghost btn-sm" id="dlCsvBtn" onclick="downloadFile('csv')">⬇ Job links CSV</button>
-          <button class="btn btn-ghost btn-sm" id="dlZipBtn" onclick="downloadFile('zip')">⬇ All resumes ZIP (DOCX)</button>
-          <button class="btn btn-ghost btn-sm" id="dlMdBtn"  onclick="downloadFile('index')">⬇ Index MD</button>
+          <button class="btn btn-ghost btn-sm" onclick="downloadFile('csv')">⬇ Job links CSV</button>
+          <button class="btn btn-ghost btn-sm" onclick="downloadFile('json')">⬇ Manifest JSON</button>
         </div>
       </div>
 
@@ -784,7 +783,7 @@ function updateResultsPanel(state) {
         <td>${escHtml(r.company)}</td>
         <td><span class="badge badge-board">${escHtml(r.board)}</span></td>
         <td><span class="badge badge-passed">✓ Passed</span></td>
-        <td><a href="/api/download/${state.run_id}/zip" download style="font-size:12px">⬇ DOCX</a></td>
+        <td><a href="/api/download/${state.run_id}/docx/${escHtml(r.job_id)}" download style="font-size:12px">⬇ DOCX</a></td>
         <td>
           <button class="btn btn-ghost btn-sm" onclick="scanATS('${state.run_id}','${escHtml(r.job_id)}',this)">Scan</button>
           <div id="ats-${escHtml(r.job_id)}" style="display:none;margin-top:6px;font-size:11px"></div>
@@ -832,9 +831,8 @@ async function loadHistory() {
         <div class="history-meta">${date}  ·  ${r.total_found} found  ·  ${r.total_passed} passed  ·  ${r.total_failed} failed</div>
       </div>
       <div class="flex gap-2">
-        <a href="/api/download/${r.run_id}/csv"   class="btn btn-ghost btn-sm">CSV</a>
-        <a href="/api/download/${r.run_id}/zip"   class="btn btn-ghost btn-sm">Resumes</a>
-        <a href="/api/download/${r.run_id}/index" class="btn btn-ghost btn-sm">Index</a>
+        <a href="/api/download/${r.run_id}/csv"  class="btn btn-ghost btn-sm">CSV</a>
+        <a href="/api/download/${r.run_id}/json" class="btn btn-ghost btn-sm">JSON</a>
       </div>
     </div>`;
   }).join('');
