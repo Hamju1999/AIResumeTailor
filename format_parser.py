@@ -115,7 +115,7 @@ Output ONLY valid JSON - no preamble, no explanation.
 Rules for skill_groups:
   Extract the EXACT text used for each skill group in the template.
   For example: ["Programming and Engineering", "AI and Machine Learning", "Analytics and Visualisation"]
-  If the template does not define skill groups explicitly, return an empty list [].
+  If the template does not define skill groups explicitly, return an empty list: []
   Only return group names if they are literally written in the format template.
 
 Rules for max_pages:
