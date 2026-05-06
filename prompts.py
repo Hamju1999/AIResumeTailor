@@ -200,7 +200,7 @@ def _build_tailor_system(fmt=None) -> str:
             f"'Analytics & Visualization' unless those names genuinely fit the selected content.\n"
             f"  - Do not include a group if it would have fewer than 2 skills.\n"
             f"Each line format: GroupName: item1, item2, item3."
-        
+        )
     return (
         TAILOR_SYSTEM
         .replace('"<USER_NAME_PLACEHOLDER>"',    f'"{config.USER_NAME}"')
