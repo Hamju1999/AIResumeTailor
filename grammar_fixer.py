@@ -17,11 +17,8 @@ Fixes applied:
 """
 
 from __future__ import annotations
-
 import logging
-
 from models import TailoredResume
-
 log = logging.getLogger("grammar_fixer")
 
 # Compound adjectives that should KEEP their hyphen - standard English usage
@@ -48,7 +45,6 @@ Rules:
 6. Output ONLY the corrected text - no explanation, no preamble.
 """
 
-
 async def fix_grammar(resume: TailoredResume) -> TailoredResume:
     """
     Fix grammar and punctuation in narrative fields.
@@ -56,9 +52,7 @@ async def fix_grammar(resume: TailoredResume) -> TailoredResume:
     Returns a new TailoredResume with corrected text.
     """
     import llm_client
-
     data = resume.model_dump()
-
     # Fix narrative fields via LLM
     for field in ["summary", "experience", "projects"]:
         val = data.get(field, "") or ""
@@ -73,19 +67,15 @@ async def fix_grammar(resume: TailoredResume) -> TailoredResume:
                 log.debug(f"Grammar fixed: {field}")
             except Exception as e:
                 log.warning(f"Grammar fix skipped for {field}: {e}")
-
     # Fix skills: ensure each line ends with a full stop
     skills = data.get("skills", "") or ""
     if skills.strip():
         data["skills"] = _fix_skills_punctuation(skills)
-
     # Fix certifications: ensure each line ends with a full stop
     certs = data.get("certifications", "") or ""
     if certs.strip():
         data["certifications"] = _fix_cert_punctuation(certs)
-
     return TailoredResume(**data)
-
 
 def _fix_skills_punctuation(skills: str) -> str:
     """
@@ -101,7 +91,6 @@ def _fix_skills_punctuation(skills: str) -> str:
             line = line + "."
         fixed.append(line)
     return "\n".join(fixed)
-
 
 def _fix_cert_punctuation(certs: str) -> str:
     """Ensure each certification line ends with a full stop."""
