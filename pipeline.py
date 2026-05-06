@@ -95,7 +95,7 @@ async def run() -> PipelineRun:
     return manifest
 
 # Per-job processing (Phases 3-5) 
-async def _process_job(job: Job) -> JobResult | FailedJob:
+async def _process_job(job: Job, include_certs: bool = False) -> JobResult | FailedJob:
     """
     Phases 3→4→5 for a single job with retry loop.
     On verification or validation failure: inject correction notes and re-tailor.
@@ -112,6 +112,7 @@ async def _process_job(job: Job) -> JobResult | FailedJob:
                 format_template=_format_template,
                 correction_notes=correction_notes,
                 fmt=_format_params,
+                include_certs=include_certs,
             )
             # Auto-fix hyphens and semicolons before any validation.
             resume = _sanitize_resume(resume)
