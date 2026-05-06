@@ -59,6 +59,34 @@ Before writing anything, carefully read the full job description and note:
       You must use the JD's exact words whenever they honestly describe the work.
       Target: every hard skill and domain phrase in the JD that the master resume supports
       must appear at least once in your output.
+      SOFT SKILLS — apply the same audit to competencies and methodologies:
+      Read every soft skill and analytical competency listed in the JD requirements.
+      If the master resume contains evidence of that competency — even implicitly —
+      use the JD's exact term for it somewhere in the resume. Examples:
+        JD says "critical thinking" → your model diagnostics and feature selection required
+          critical thinking → use the phrase "critical thinking" in a bullet or summary.
+        JD says "problem solving" → your debugging, validation, and pipeline fixes are
+          problem solving → use "problem solving" explicitly.
+        JD says "decision making" → your model selection, feature engineering decisions,
+          and threshold choices are decision making → write "decision making".
+        JD says "collaboration and teamwork" → your cross-functional reporting and
+          stakeholder outputs demonstrate collaboration → write "collaboration".
+        JD says "troubleshooting" → your data quality debugging and validation checks
+          are troubleshooting → write "troubleshooting".
+        JD says "analytical" → your quantitative analysis work is analytical → write
+          "analytical" or "analytical requirements" in context.
+        JD says "organizational skills" → your ETL pipeline structure and documentation
+          demonstrate organizational skills → include it.
+      These are not buzzwords — they are the exact terms ATS systems scan for.
+      A resume that says "debugged data quality issues" scores zero for "troubleshooting".
+      A resume that says "worked with cross-functional teams" scores zero for "collaboration".
+      Use the JD's exact words when the underlying work genuinely supports it.
+      Soft skill terms can appear naturally in:
+        - Summary sentences ("applying critical thinking and problem solving...")
+        - Experience bullets ("collaborated with researchers to define analytical requirements...")
+        - Skills section if the format supports a competencies group
+      Maximum 4-5 soft skill terms total — only the ones most prominent in the JD.
+      Do not stuff every possible soft skill — prioritise what the JD repeats or emphasises.
 Every section you write must reflect this analysis.
 
 STEP 1 - EDUCATION (fixed):
