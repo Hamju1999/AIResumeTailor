@@ -11,7 +11,6 @@ import asyncio
 import csv
 import logging
 import uuid
-import zipfile
 from datetime import datetime
 from pathlib import Path
 import config
@@ -199,36 +198,6 @@ def _save_outputs(manifest: PipelineRun) -> None:
             w.writerow(["FAILED", f_.job.title, f_.job.company, f_.job.board,
                         f_.job.location or "", f_.job.job_url, "", f_.attempts])
     log.info(f"Job links CSV → {csv_path}")
-    # 3. Markdown index
-    index_path = config.OUTPUT_DIR / f"index_{manifest.run_id}.md"
-    lines = [
-        f"# Job-Resume Pairs - Run {manifest.run_id}",
-        f"Generated: {manifest.finished_at.strftime('%Y-%m-%d %H:%M UTC')}",
-        f"**{manifest.total_passed} resumes ready  |  {manifest.total_failed} failed**\n",
-        "---\n", "## ✅ Passed\n",
-    ]
-    for r in manifest.results:
-        lines.append(
-            f"- **{r.job.title}** @ {r.job.company} ({r.job.board})\n"
-            f"  🔗 {r.job.job_url}\n"
-            f"  📄 `{Path(r.resume_path).name if r.resume_path else 'n/a'}`\n"
-        )
-    if manifest.failures:
-        lines += ["\n---\n", "## ❌ Failed\n"]
-        for f_ in manifest.failures:
-            lines.append(f"- **{f_.job.title}** @ {f_.job.company} - {f_.reason}\n")
-    index_path.write_text("\n".join(lines), encoding="utf-8")
-    log.info(f"Index → {index_path}")
-    # 4. Resumes zip - .docx only (PDF removed)
-    zip_path = config.OUTPUT_DIR / f"resumes_{manifest.run_id}.zip"
-    docx_files = list(resume_dir.glob("*.docx")) if resume_dir.exists() else []
-    if docx_files:
-        with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
-            for f in docx_files:
-                zf.write(f, f.name)
-        log.info(f"Resumes zip ({len(docx_files)} docx) → {zip_path}")
-    else:
-        log.warning(f"No .docx files in {resume_dir} - nothing to zip.")
 
 # Helpers 
 def _resume_path(job: Job) -> Path:
