@@ -6,34 +6,27 @@ FormatParams parsed from the user's format template - nothing is hardcoded.
 """
 
 from __future__ import annotations
-
 import logging
 import re
-
 from models import TailoredResume, ValidationIssue, ValidationResult
 from format_parser import FormatParams
-
 log = logging.getLogger("validator")
-
 REQUIRED_FIELDS = ["summary", "skills", "experience", "projects", "education"]
 
 # Sentence boundary - avoids counting decimals (1.2 GB), model names (GPT-4)
 SENT_RE = re.compile(r'[.!?]+(?:\s+[A-Z]|$)')
-
 
 async def validate_resume(
     resume: TailoredResume,
     format_template: str,
     fmt: FormatParams | None = None,
 ) -> ValidationResult:
-
     if fmt is None:
         fmt = FormatParams()   # safe defaults
-
     log.info(f"Validating: {resume.target_title}")
     issues: list[ValidationIssue] = []
 
-    # ── 1. Required sections populated ────────────────────────────────────────
+    # 1. Required sections populated
     for field in REQUIRED_FIELDS:
         if not getattr(resume, field, "").strip():
             issues.append(ValidationIssue(
@@ -42,9 +35,8 @@ async def validate_resume(
                 suggestion=f"Populate '{field}' from the master resume.",
             ))
 
-    # ── 2. Skill group headers ────────────────────────────────────────────────
+    # 2. Skill group headers
     skills_text = resume.skills or ""
-    
     if fmt.skill_groups_fixed:
         # Exact match required
         for group in fmt.skill_groups:
@@ -71,7 +63,7 @@ async def validate_resume(
                 suggestion=f"Add {expected - len(skill_lines)} more skill group line(s).",
             ))
 
-    # ── 3. No stray bullet characters (•, ▸, –) in experience or projects ─────
+    # 3. No stray bullet characters (•, ▸, –) in experience or projects
     bullet_re = re.compile(r"^[\s]*[•\*▸–]\s", re.MULTILINE)
     for field in ["experience", "projects"]:
         val = getattr(resume, field, "") or ""
@@ -82,7 +74,7 @@ async def validate_resume(
                 suggestion="Use '- ' (dash space) bullets only, not •, ▸, or –.",
             ))
 
-    # ── 4. Summary sentence count - dynamic ───────────────────────────────────
+    # 4. Summary sentence count - dynamic
     summary_sc = len(SENT_RE.findall(resume.summary or ""))
     if summary_sc > fmt.summary_sentences:
         issues.append(ValidationIssue(
@@ -94,7 +86,7 @@ async def validate_resume(
             suggestion=f"Trim to exactly {fmt.summary_sentences} sentences.",
         ))
 
-    # ── 5. Project bullet count - dynamic ─────────────────────────────────────
+    #  5. Project bullet count - dynamic 
     projects_text = resume.projects or ""
     proj_flagged = False
     for block in re.split(r"\n\n+", projects_text):
@@ -129,7 +121,7 @@ async def validate_resume(
         if proj_flagged:
             break
 
-    # ── 6. Project count - dynamic ────────────────────────────────────────────
+    # 6. Project count - dynamic 
     heading_count = sum(
         1 for line in projects_text.splitlines()
         if line.strip() and _is_heading_line(line.strip())
@@ -144,11 +136,10 @@ async def validate_resume(
             suggestion=f"Remove the least relevant project. Keep at most {fmt.max_projects}.",
         ))
 
-    # ── 7. Experience bullet count per role - dynamic ─────────────────────────
+    # 7. Experience bullet count per role - dynamic
     exp_text  = resume.experience or ""
     current_bullets: list[str] = []
     exp_flagged = False
-
     for line in exp_text.splitlines():
         stripped = line.strip()
         if not stripped:
@@ -173,7 +164,6 @@ async def validate_resume(
             current_bullets = []
         elif stripped.startswith("- "):
             current_bullets.append(stripped)
-
     if not exp_flagged and current_bullets:
         bc = len(current_bullets)
         if bc < fmt.exp_bullets_min or bc > fmt.exp_bullets_max:
@@ -198,7 +188,7 @@ async def validate_resume(
                     ))
                     break
 
-    # ── 8. Overall length - dynamic page limit ────────────────────────────────
+    # 8. Overall length - dynamic page limit
     all_text   = " ".join([
         resume.summary or "", resume.skills or "", resume.experience or "",
         resume.projects or "", resume.education or "",
@@ -218,18 +208,14 @@ async def validate_resume(
                 f"Summary: {fmt.summary_sentences} sentences."
             ),
         ))
-
     if issues:
         correction = _build_correction(issues)
         log.warning(f"Validation FAILED ({len(issues)} issue(s)): {resume.target_title}")
         return ValidationResult(passed=False, issues=issues, correction_prompt=correction)
-
     log.info(f"Validation PASSED: {resume.target_title}")
     return ValidationResult(passed=True)
 
-
-# ── Helpers ───────────────────────────────────────────────────────────────────
-
+# Helpers 
 def _is_heading_line(line: str) -> bool:
     if not line:
         return False
@@ -240,7 +226,6 @@ def _is_heading_line(line: str) -> bool:
     if line.startswith("I ") or line.startswith("- "):
         return False
     return len(line) <= 70
-
 
 def _build_correction(issues: list[ValidationIssue]) -> str:
     lines = ["Fix ALL of the following before the next attempt:"]
