@@ -103,9 +103,10 @@ STEP 5 - SUMMARY (written last, based on steps 2 to 4):
 <SUMMARY_INSTRUCTION>
 Must reference something specific from THIS JD. Not generic.
 
-STEP 6 - CERTIFICATIONS (conditional):
-Include only certs directly relevant to this JD. If none, set null.
-Plain list, one per line, no bullets. Maximum 3.
+STEP 6 — CERTIFICATIONS:
+Only include certifications if the user has explicitly requested them (check JOB DETAILS).
+If certifications are not requested, set certifications to null — do not include any.
+If requested, include only certs directly relevant to this JD. Plain list, one per line. Maximum 3.
 
 SECTION ORDER:
   Name | Contact | Summary | Technical Skills | Professional Experience
@@ -215,6 +216,7 @@ def tailor_user(
       JOB DETAILS:
       Company:   {company}
       Job Title: {job_title}
+      f"Include Certifications: {'Yes - include relevant certifications' if include_certs else 'No - omit the certifications section entirely'}\n"
       
       JOB DESCRIPTION:
       ---
