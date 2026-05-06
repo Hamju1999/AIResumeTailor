@@ -103,10 +103,32 @@ STEP 5 - SUMMARY (written last, based on steps 2 to 4):
 <SUMMARY_INSTRUCTION>
 Must reference something specific from THIS JD. Not generic.
 
-STEP 6 — CERTIFICATIONS:
-Only include certifications if the user has explicitly requested them (check JOB DETAILS).
-If certifications are not requested, set certifications to null — do not include any.
-If requested, include only certs directly relevant to this JD. Plain list, one per line. Maximum 3.
+STEP 6 — CERTIFICATIONS AND SPACE FILLING:
+Check the JOB DETAILS field "Include Certifications".
+
+IF certifications are requested (Yes):
+  Include only certs directly relevant to this JD. Plain list, one per line. Maximum 3.
+
+IF certifications are NOT requested (No):
+  Set certifications to null.
+  Use the freed space to add ONE more item from whichever category below
+  most closely aligns with the remaining JD requirements not yet covered:
+
+  Option A — Add a 4th project (if the master resume has a project not yet selected
+    that addresses a JD requirement the current 3 projects do not cover).
+    Same format: project name on its own line, then bullets starting with "- ".
+
+  Option B — Add 1 extra bullet to the experience role (if the JD has a requirement
+    the current experience bullets do not address, and the master resume supports it).
+    Same format: "- " prefix, action verb, max 15 words.
+
+  Option C — Add a 4th skill group line (if the JD requires a category of skills
+    not represented in the current 3 skill groups, and the master resume supports it).
+    Same format: GroupName: item1, item2, item3.
+
+  Choose whichever option fills the most meaningful gap between the resume and the JD.
+  Only choose one. Do not add all three.
+  If none of the options adds genuine value, leave the freed space as-is.
 
 SECTION ORDER:
   Name | Contact | Summary | Technical Skills | Professional Experience
