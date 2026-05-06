@@ -21,19 +21,14 @@ import time
 import uuid
 from datetime import datetime
 from pathlib import Path
-
-from flask import (Flask, Response, jsonify, redirect, render_template,
-                   request, send_file, url_for)
-
+from flask import (Flask, Response, jsonify, redirect, render_template, request, send_file, url_for)
 BASE_DIR = Path(__file__).parent
 sys.path.insert(0, str(BASE_DIR))
-
 import config
-
 app = Flask(__name__, template_folder=BASE_DIR / "templates")
 app.secret_key = os.urandom(24)
 
-# ── In-memory run state ───────────────────────────────────────────────────────
+# In-memory run state
 _run_state = {
     "status": "idle", "run_id": None, "logs": [],
     "results": [], "failures": [], "total": 0,
@@ -42,7 +37,6 @@ _run_state = {
 _log_queue: queue.Queue = queue.Queue()
 _state_lock = threading.Lock()
 
-
 class QueueHandler(logging.Handler):
     def emit(self, record):
         msg = self.format(record)
@@ -50,32 +44,25 @@ class QueueHandler(logging.Handler):
         with _state_lock:
             _run_state["logs"].append(entry)
         _log_queue.put(entry)
-
-
 _queue_handler = QueueHandler()
 _queue_handler.setLevel(logging.DEBUG)
 _queue_handler.setFormatter(logging.Formatter("%(name)s: %(message)s"))
 logging.getLogger().addHandler(_queue_handler)
 logging.getLogger().setLevel(logging.INFO)
 
-
-# ── Setup check ───────────────────────────────────────────────────────────────
-
+# Setup check
 def _redirect_if_not_setup():
     if not config.is_setup_complete():
         return redirect(url_for("setup"))
     return None
 
-
-# ── Routes ────────────────────────────────────────────────────────────────────
-
+# Routes
 @app.route("/")
 def index():
     redir = _redirect_if_not_setup()
     if redir:
         return redir
     return render_template("index.html")
-
 
 @app.route("/setup", methods=["GET"])
 def setup():
@@ -87,14 +74,12 @@ def setup():
             pass
     return render_template("setup.html", existing=existing)
 
-
 @app.route("/api/setup", methods=["POST"])
 def api_setup():
     """Save user configuration and uploaded files."""
     try:
         form = request.form
         files = request.files
-
         # Load existing config to preserve file paths if not re-uploading
         existing = {}
         if config.USER_CONFIG_PATH.exists():
@@ -102,13 +87,11 @@ def api_setup():
                 existing = json.loads(config.USER_CONFIG_PATH.read_text(encoding="utf-8"))
             except Exception:
                 pass
-
         # Required text fields
         full_name    = form.get("full_name", "").strip()
         contact_line = form.get("contact_line", "").strip()
         if not full_name or not contact_line:
             return jsonify({"error": "Full name and contact line are required."}), 400
-
         # Handle master resume upload
         master_path = existing.get("master_resume_path", "")
         mr_file = files.get("master_resume")
@@ -117,7 +100,6 @@ def api_setup():
             dest = BASE_DIR / f"master_resume{suffix}"
             mr_file.save(str(dest))
             master_path = str(dest)
-
         # Handle format template upload
         fmt_path = existing.get("format_template_path", "")
         ft_file = files.get("format_template")
@@ -126,24 +108,20 @@ def api_setup():
             dest = BASE_DIR / f"format_template{suffix}"
             ft_file.save(str(dest))
             fmt_path = str(dest)
-
         if not master_path or not Path(master_path).exists():
             return jsonify({"error": "Master resume file is required."}), 400
         if not fmt_path or not Path(fmt_path).exists():
             return jsonify({"error": "Format template file is required."}), 400
-
         # Locations - one per line, filter empty
         locations_raw = form.get("locations", "")
         locations = [l.strip() for l in locations_raw.splitlines() if l.strip()]
         if not locations:
             return jsonify({"error": "At least one location is required."}), 400
-
         # Job titles - one per line
         titles_raw = form.get("job_titles", "")
         job_titles = [t.strip() for t in titles_raw.splitlines() if t.strip()]
         if not job_titles:
             return jsonify({"error": "At least one job title is required."}), 400
-
         cfg = {
             "full_name":             full_name,
             "contact_line":          contact_line,
@@ -157,46 +135,37 @@ def api_setup():
             "experience_level":      form.get("experience_level", "entry"),
             "anthropic_api_key":     form.get("anthropic_api_key", "").strip(),
         }
-
         config.USER_CONFIG_PATH.write_text(
             json.dumps(cfg, indent=2, ensure_ascii=False), encoding="utf-8"
         )
         config.reload()
-
         logging.getLogger("setup").info("Setup complete - configuration saved.")
         return jsonify({"ok": True, "redirect": "/"})
-
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 @app.route("/api/setup/status")
 def api_setup_status():
     return jsonify({"complete": config.is_setup_complete()})
-
 
 @app.route("/api/state")
 def api_state():
     with _state_lock:
         return jsonify(dict(_run_state))
 
-
 @app.route("/api/run", methods=["POST"])
 def api_run():
     if not config.is_setup_complete():
         return jsonify({"error": "Setup not complete. Go to /setup first."}), 400
-
     with _state_lock:
         if _run_state["status"] == "running":
             return jsonify({"error": "A run is already in progress."}), 409
-
     data = request.get_json(force=True) or {}
     custom_urls: list[str] = [u.strip() for u in data.get("custom_urls", []) if u.strip()]
     limit: int = int(data.get("limit", 0))
     paste_jd:      str = data.get("paste_jd", "").strip()
     paste_title:   str = data.get("paste_title", "Job").strip()
     paste_company: str = data.get("paste_company", "Company").strip()
-
     with _state_lock:
         _run_state.update({
             "status": "running", "run_id": None, "logs": [],
@@ -209,11 +178,9 @@ def api_run():
             _log_queue.get_nowait()
         except queue.Empty:
             break
-
     thread = threading.Thread(target=_run_pipeline, args=(custom_urls, limit, paste_jd, paste_title, paste_company), daemon=True)
     thread.start()
     return jsonify({"ok": True})
-
 
 @app.route("/api/logs/stream")
 def api_logs_stream():
@@ -257,7 +224,6 @@ def api_ats_score(run_id: str, job_id: str):
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     except Exception as e:
         return jsonify({"error": f"Could not read manifest: {e}"}), 500
-
     job_result = None
     for r in manifest.get("results", []):
         if r.get("job", {}).get("job_id") == job_id:
@@ -265,36 +231,30 @@ def api_ats_score(run_id: str, job_id: str):
             break
     if not job_result:
         return jsonify({"error": "Job not found in this run"}), 404
-
     jd_text     = job_result.get("job", {}).get("description", "")
     resume_path = Path(job_result.get("resume_path", ""))
     matched_kw  = job_result.get("resume", {}).get("matched_keywords", [])
-
     if not resume_path.exists():
         return jsonify({"error": "Resume .docx not found"}), 404
     if not jd_text:
         return jsonify({"error": "No job description stored"}), 400
-
     try:
         from docx import Document as DocxDocument
         doc = DocxDocument(str(resume_path))
         resume_text = " ".join(p.text for p in doc.paragraphs if p.text.strip())
     except Exception as e:
         return jsonify({"error": f"Could not read resume: {e}"}), 500
-
     result = ats_scorer.score(
         jd_text=jd_text,
         resume_text=resume_text,
         matched_keywords=matched_kw,
         threshold=75,
     )
-
     if not result.above_threshold:
         logging.getLogger("ats").warning(
             "ATS score %d%% below 75%%. Missing: %s",
             result.score, ", ".join(result.missing[:5])
         )
-
     return jsonify({
         "score":            result.score,
         "above_threshold":  result.above_threshold,
@@ -324,8 +284,7 @@ def api_history():
             pass
     return jsonify(runs)
 
-
-# ── Pipeline runner ───────────────────────────────────────────────────────────
+# Pipeline runner
 
 def _run_pipeline(custom_urls: list[str], limit: int, paste_jd: str = "", paste_title: str = "", paste_company: str = "") -> None:
     log = logging.getLogger("ui.runner")
@@ -339,7 +298,6 @@ def _run_pipeline(custom_urls: list[str], limit: int, paste_jd: str = "", paste_
         else:
             log.info(f"Mode: full scrape" + (f" (limit {limit})" if limit else ""))
             manifest = asyncio.run(_run_full_pipeline(limit))
-
         with _state_lock:
             _run_state.update({
                 "status": "done", "run_id": manifest.run_id,
@@ -352,7 +310,6 @@ def _run_pipeline(custom_urls: list[str], limit: int, paste_jd: str = "", paste_
         logging.getLogger("ui.runner").error(f"Pipeline error: {exc}", exc_info=True)
         with _state_lock:
             _run_state.update({"status": "error", "finished": datetime.now().isoformat()})
-
 
 async def _run_full_pipeline(limit: int):
     import pipeline as pl
@@ -367,19 +324,16 @@ async def _run_full_pipeline(limit: int):
     if limit:
         scraper.discover_jobs = _orig
     return manifest
-
-
+  
 async def _run_custom_urls(urls: list[str]):
     import hashlib
     import pipeline as pl
     from scraper import _get
     from models import Job, RawJob
     from bs4 import BeautifulSoup
-
     log = logging.getLogger("ui.custom")
     await pl.load_content()
     jobs = []
-
     for url in urls:
         log.info(f"Fetching custom URL: {url}")
         try:
@@ -427,13 +381,10 @@ async def _run_custom_urls(urls: list[str]):
             log.info(f"  Loaded: {title or 'Job'} @ {company or 'Company'}")
         except Exception as e:
             log.error(f"Error fetching {url}: {e}")
-
     if not jobs:
         log.error("No usable jobs loaded from provided URLs.")
         from models import PipelineRun
-        return PipelineRun(run_id=uuid.uuid4().hex[:8], started_at=datetime.utcnow(),
-                           finished_at=datetime.utcnow())
-
+        return PipelineRun(run_id=uuid.uuid4().hex[:8], started_at=datetime.utcnow(), finished_at=datetime.utcnow())
     log.info(f"Processing {len(jobs)} custom jobs through AI phases ...")
     run_id = uuid.uuid4().hex[:8]
     pl._run_id = run_id
@@ -446,7 +397,6 @@ async def _run_custom_urls(urls: list[str]):
             failures.append(outcome)
         if i < len(jobs) - 1:
             await asyncio.sleep(config.INTER_JOB_DELAY_SEC)
-
     from models import PipelineRun
     manifest = PipelineRun(
         run_id=run_id, started_at=datetime.utcnow(), finished_at=datetime.utcnow(),
@@ -461,10 +411,8 @@ async def _run_paste_jd(jd_text: str, title: str, company: str):
     import hashlib
     import pipeline as pl
     from models import Job
-
     log = logging.getLogger("ui.paste")
     await pl.load_content()
-
     job_id = hashlib.md5(jd_text[:200].encode()).hexdigest()[:12]
     job = Job(
         job_url="",
@@ -477,13 +425,11 @@ async def _run_paste_jd(jd_text: str, title: str, company: str):
         job_id=job_id,
     )
     log.info(f"Processing pasted JD: {title} @ {company}")
-
     run_id = uuid.uuid4().hex[:8]
     pl._run_id = run_id
     outcome = await pl._process_job(job)
     results  = [outcome] if hasattr(outcome, "resume_path") else []
     failures = [outcome] if not hasattr(outcome, "resume_path") else []
-
     from models import PipelineRun
     manifest = PipelineRun(
         run_id=run_id, started_at=datetime.utcnow(), finished_at=datetime.utcnow(),
@@ -502,13 +448,10 @@ def _job_result_dict(r) -> dict:
         "resume_file": docx_path.name if docx_path else "", "attempts": r.attempts,
     }
 
-
 def _failed_job_dict(f) -> dict:
     return {"title": f.job.title, "company": f.job.company, "reason": f.reason}
 
-
-# ── Entry point ───────────────────────────────────────────────────────────────
-
+# Entry point
 if __name__ == "__main__":
     config.OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     config.RESUME_DIR.mkdir(parents=True, exist_ok=True)
