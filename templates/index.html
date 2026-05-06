@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ResTail</title>
 <style>
-  /* ── Variables ─────────────────────────────────────────────────── */
+  /* Variables */
   :root {
     --bg:        #0C0F18;
     --surface:   #131620;
@@ -26,7 +26,7 @@
     --sans:      'DM Sans', 'Segoe UI', system-ui, sans-serif;
   }
 
-  /* ── Reset ─────────────────────────────────────────────────────── */
+  /* Reset */
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
   body {
@@ -40,7 +40,7 @@
   a { color: var(--accent); text-decoration: none; }
   a:hover { text-decoration: underline; }
 
-  /* ── Layout ─────────────────────────────────────────────────────── */
+  /* Layout */
   .layout {
     display: grid;
     grid-template-columns: 240px 1fr;
@@ -136,7 +136,7 @@
     padding: 28px;
   }
 
-  /* ── Panels ─────────────────────────────────────────────────────── */
+  /* Panels */
   .panel { display: none; }
   .panel.active { display: block; }
 
@@ -152,7 +152,7 @@
     font-size: 13px;
   }
 
-  /* ── Cards ──────────────────────────────────────────────────────── */
+  /* Cards */
   .card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -169,7 +169,7 @@
     margin-bottom: 14px;
   }
 
-  /* ── Stat row ───────────────────────────────────────────────────── */
+  /* Stat row */
   .stats {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -194,7 +194,7 @@
   }
   .stat-label { font-size: 11px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: .5px; }
 
-  /* ── Buttons ─────────────────────────────────────────────────────── */
+  /* Buttons */
   .btn {
     display: inline-flex;
     align-items: center;
@@ -223,7 +223,7 @@
   .btn-sm { padding: 5px 12px; font-size: 12px; }
   .btn-danger { background: rgba(239,68,68,.15); color: var(--danger); border: 1px solid rgba(239,68,68,.3); }
 
-  /* ── Inputs ──────────────────────────────────────────────────────── */
+  /* Inputs */
   textarea, input[type=text], input[type=number] {
     width: 100%;
     background: var(--surface2);
@@ -248,7 +248,7 @@
     margin-bottom: 12px;
   }
 
-  /* ── Log terminal ────────────────────────────────────────────────── */
+  /* Log terminal */
   .log-box {
     background: #08090F;
     border: 1px solid var(--border);
@@ -268,7 +268,7 @@
   .log-level.ERROR   { color: var(--log-error); }
   .log-msg  { color: #94A3B8; word-break: break-word; }
 
-  /* ── Results table ───────────────────────────────────────────────── */
+  /* Results table */
   .results-table {
     width: 100%;
     border-collapse: collapse;
@@ -304,7 +304,7 @@
   .badge-failed { background: rgba(239,68,68,.15); color: var(--danger); }
   .badge-board  { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
 
-  /* ── URL pill list ───────────────────────────────────────────────── */
+  /* URL pill list */
   .url-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; min-height: 20px; }
   .url-pill {
     display: flex;
@@ -330,13 +330,13 @@
   }
   .url-pill .remove:hover { color: var(--danger); }
 
-  /* ── Progress bar ────────────────────────────────────────────────── */
+  /* Progress bar */
   .progress-wrap { background: var(--surface2); border-radius: 4px; height: 4px; margin: 14px 0; overflow: hidden; }
   .progress-bar  { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); width: 0; transition: width .4s; border-radius: 4px; }
   .progress-bar.indeterminate { width: 40%; animation: slide 1.4s ease-in-out infinite; }
   @keyframes slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(300%); } }
 
-  /* ── Tabs ────────────────────────────────────────────────────────── */
+  /* Tabs */
   .tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border); margin-bottom: 18px; }
   .tab {
     padding: 8px 16px;
@@ -351,7 +351,7 @@
   .tab:hover { color: var(--text); }
   .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
-  /* ── History list ────────────────────────────────────────────────── */
+  /* History list */
   .history-item {
     display: flex;
     align-items: center;
@@ -364,11 +364,11 @@
   .history-item:last-child { border-bottom: none; }
   .history-meta { font-size: 11px; color: var(--muted); margin-top: 3px; }
 
-  /* ── Empty state ─────────────────────────────────────────────────── */
+  /* Empty state */
   .empty { text-align: center; padding: 48px; color: var(--muted); }
   .empty-icon { font-size: 36px; margin-bottom: 12px; }
 
-  /* ── Divider ─────────────────────────────────────────────────────── */
+  /* Divider */
   .divider { border: none; border-top: 1px solid var(--border); margin: 18px 0; }
   .flex { display: flex; }
   .gap-2 { gap: 8px; }
@@ -383,10 +383,10 @@
 
 <div class="layout">
 
-  <!-- ── Header ─────────────────────────────────────────────────────── -->
+  <!-- Header -->
   <header>
     <div>
-      <div class="logo">RESTAIL</div>
+      <div class="logo">ResTail</div>
       <div class="logo-sub">Agentic Job Pipeline</div>
     </div>
     <div class="header-right">
@@ -397,7 +397,7 @@
     </div>
   </header>
 
-  <!-- ── Sidebar ────────────────────────────────────────────────────── -->
+  <!-- Sidebar -->
   <nav>
     <div class="nav-item active" data-panel="run">
       <span class="nav-icon">▶</span> Run Pipeline
@@ -410,10 +410,10 @@
     </div>
   </nav>
 
-  <!-- ── Main ───────────────────────────────────────────────────────── -->
+  <!-- Main -->
   <main>
 
-    <!-- ═══ RUN PANEL ═══════════════════════════════════════════════ -->
+    <!-- RUN PANEL -->
     <div class="panel active" id="panel-run">
 
       <div class="section-title">Run pipeline</div>
@@ -435,9 +435,9 @@
       <div class="card">
         <div class="card-title">Pipeline mode</div>
         <div class="tabs">
-          <div class="tab active" data-tab="scrape">Full scrape</div>
-          <div class="tab" data-tab="custom">My job links</div>
-          <div class="tab" data-tab="paste">Job description text</div>
+          <div class="tab active" data-tab="scrape">Full Scrape</div>
+          <div class="tab" data-tab="custom">Job Links</div>
+          <div class="tab" data-tab="paste">Job Description</div>
         </div>
 
         <!-- Full scrape tab -->
@@ -499,7 +499,7 @@
     </div><!-- /panel-run -->
 
 
-    <!-- ═══ RESULTS PANEL ════════════════════════════════════════════ -->
+    <!-- RESULTS PANEL -->
     <div class="panel" id="panel-results">
 
       <div class="section-title">Results</div>
@@ -551,7 +551,7 @@
     </div><!-- /panel-results -->
 
 
-    <!-- ═══ HISTORY PANEL ════════════════════════════════════════════ -->
+    <!-- HISTORY PANEL -->
     <div class="panel" id="panel-history">
 
       <div class="section-title">Run history</div>
@@ -568,7 +568,7 @@
 
 
 <script>
-// ── State ─────────────────────────────────────────────────────────────────
+// State
 let currentMode   = 'scrape';
 let customUrls    = [];
 let currentRunId  = null;
@@ -576,7 +576,7 @@ let sseSource     = null;
 let runStartTime  = null;
 let timerInterval = null;
 
-// ── Nav & tabs ─────────────────────────────────────────────────────────────
+// Nav & tabs
 document.querySelectorAll('.nav-item').forEach(item => {
   item.addEventListener('click', () => {
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -598,7 +598,7 @@ document.querySelectorAll('.tab').forEach(tab => {
   });
 });
 
-// ── Custom URLs ────────────────────────────────────────────────────────────
+// Custom URLs
 const urlInput = document.getElementById('urlInput');
 urlInput.addEventListener('keydown', e => { if (e.key === 'Enter') addUrl(); });
 
@@ -628,7 +628,7 @@ function renderUrls() {
     </div>`).join('');
 }
 
-// ── Run ────────────────────────────────────────────────────────────────────
+// Run
 async function startRun() {
   if (currentMode === 'custom' && customUrls.length === 0) {
     alert('Add at least one job URL first.');
@@ -736,7 +736,7 @@ async function fetchState() {
   return r.json();
 }
 
-// ── Status UI ──────────────────────────────────────────────────────────────
+// Status UI
 function updateStatusUI(status) {
   const dot   = document.getElementById('statusDot');
   const label = document.getElementById('statusText');
@@ -751,7 +751,7 @@ function updateStats(state) {
   currentRunId = state.run_id;
 }
 
-// ── Results panel ──────────────────────────────────────────────────────────
+// Results panel
 function updateResultsPanel(state) {
   currentRunId = state.run_id;
 
@@ -805,7 +805,7 @@ function downloadFile(type) {
   window.location.href = `/api/download/${currentRunId}/${type}`;
 }
 
-// ── History ────────────────────────────────────────────────────────────────
+// History
 async function loadHistory() {
   const card = document.getElementById('historyCard');
   card.innerHTML = '<div class="empty text-muted text-sm" style="padding:20px">Loading…</div>';
@@ -831,12 +831,12 @@ async function loadHistory() {
   }).join('');
 }
   
-// ── Utilities ──────────────────────────────────────────────────────────────
+// Utilities
 function escHtml(s) {
   return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// ── ATS Scanner ───────────────────────────────────────────────────────────────
+// ATS Scanner
 async function scanATS(runId, jobId, btn) {
   btn.textContent = '…';
   btn.disabled = true;
@@ -871,7 +871,7 @@ async function scanATS(runId, jobId, btn) {
   }
 }
 
-// ── Init ───────────────────────────────────────────────────────────────────
+// Init
 (async () => {
   const state = await fetchState();
   updateStatusUI(state.status);
