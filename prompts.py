@@ -219,11 +219,13 @@ def tailor_user(
     job_title: str,
     format_template: str,
     correction_notes: str = "",
+    include_certs: bool = False,
 ) -> str:
     correction_block = (
         f"\n\nCORRECTION NOTES FROM PREVIOUS ATTEMPT - fix every item:\n{correction_notes}"
         if correction_notes else ""
     )
+    include_certs_label = "Yes - include relevant certifications" if include_certs else "No - use freed space to add the most JD-relevant project, experience bullet, or skill group instead"  
     return f"""\
       MASTER RESUME - source of truth, use only this:
       ---
@@ -238,7 +240,7 @@ def tailor_user(
       JOB DETAILS:
       Company:   {company}
       Job Title: {job_title}
-      f"Include Certifications: {'Yes - include relevant certifications' if include_certs else 'No - omit the certifications section entirely'}\n"
+      Include Certifications: {include_certs_label}
       
       JOB DESCRIPTION:
       ---
