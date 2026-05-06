@@ -15,7 +15,7 @@ import os
 import sys
 from pathlib import Path
 
-# ── Try rich for nicer output; fall back to stdlib logging ───────────────────
+# Try rich for nicer output; fall back to stdlib logging
 try:
     from rich.logging import RichHandler
     logging.basicConfig(
@@ -32,7 +32,6 @@ except ImportError:
 
 log = logging.getLogger("main")
 
-
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Agentic Job Application Pipeline")
     p.add_argument("--dry-run", action="store_true",
@@ -45,45 +44,37 @@ def parse_args() -> argparse.Namespace:
                    help="Anthropic API key (alternative to env var)")
     return p.parse_args()
 
-
 async def main() -> None:
     args = parse_args()
-
-    # ── Apply CLI overrides ───────────────────────────────────────────────────
+    # Apply CLI overrides 
     import config
-
     if args.api_key:
         config.ANTHROPIC_API_KEY = args.api_key
     elif not config.ANTHROPIC_API_KEY:
         config.ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
-
     if args.titles:
         config.JOB_TITLES = [t.strip() for t in args.titles.split(",")]
         log.info(f"Override job titles: {config.JOB_TITLES}")
-
     # Create output dirs
     config.OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     config.RESUME_DIR.mkdir(parents=True, exist_ok=True)
-    # ── Preflight checks ──────────────────────────────────────────────────────
+    # Preflight checks
     if not config.MASTER_RESUME_PATH.exists():
         log.error(
             f"[red]master_resume.txt not found at {config.MASTER_RESUME_PATH}[/red]\n"
             "Export your resume as plain text and save it there, then re-run."
         )
         sys.exit(1)
-
     if not config.FORMAT_TEMPLATE_PATH.exists():
         log.error(
             f"[red]format_template.txt not found at {config.FORMAT_TEMPLATE_PATH}[/red]\n"
             "Save your format spec there, then re-run."
         )
         sys.exit(1)
-
     if not args.dry_run and not config.ANTHROPIC_API_KEY:
         log.error("[red]No API key found.[/red] Set ANTHROPIC_API_KEY env var or use --api-key.")
         sys.exit(1)
-
-    # ── Dry run: scrape + print job list ─────────────────────────────────────
+    # Dry run: scrape + print job list
     if args.dry_run:
         log.info("[yellow]DRY RUN - scraping only, no LLM calls[/yellow]")
         import scraper
@@ -94,8 +85,7 @@ async def main() -> None:
         for j in jobs:
             log.info(f"  [{j.board}] {j.title} @ {j.company} - {j.job_url}")
         return
-
-    # ── Full pipeline run ─────────────────────────────────────────────────────
+    # Full pipeline run
     if args.limit:
         # Monkey-patch scraper to cap results
         import scraper as _scraper
@@ -109,7 +99,7 @@ async def main() -> None:
     import pipeline
     manifest = await pipeline.run()
 
-    # ── Summary ───────────────────────────────────────────────────────────────
+    # Summary
     log.info("")
     log.info("=" * 60)
     log.info(f"Run ID   : {manifest.run_id}")
@@ -118,19 +108,16 @@ async def main() -> None:
     log.info(f"Failed   : {manifest.total_failed}")
     log.info(f"Output   : {config.OUTPUT_DIR}")
     log.info("=" * 60)
-
     if manifest.results:
         log.info("\nJob-Resume pairs:")
         for r in manifest.results:
             log.info(f"  ✅  {r.job.title} @ {r.job.company}")
             log.info(f"      {r.job.job_url}")
             log.info(f"      Resume: {r.resume_path}")
-
     if manifest.failures:
         log.info("\nFailed jobs:")
         for f in manifest.failures:
             log.info(f"  ❌  {f.job.title} @ {f.job.company} - {f.reason}")
-
 
 if __name__ == "__main__":
     asyncio.run(main())
