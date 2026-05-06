@@ -9,10 +9,8 @@ Four controls implemented dynamically (no hardcoded word lists):
 """
 
 from __future__ import annotations
-
 import logging
 from models import TailoredResume
-
 log = logging.getLogger("calibrator")
 
 CALIBRATION_SYSTEM = """\
@@ -175,7 +173,6 @@ Return ONLY this JSON - no preamble, no explanation, no markdown fences:
 }
 """
 
-
 async def calibrate(
     resume: TailoredResume,
     job_description: str = "",
@@ -186,48 +183,41 @@ async def calibrate(
     Returns a new TailoredResume with calibrated text.
     """
     import llm_client
-
     user_msg = f"""\
-MATCHED KEYWORDS (must each appear naturally at least once in the output):
-{', '.join(resume.matched_keywords or [])}
-
-CURRENT SUMMARY:
-{resume.summary or ""}
-
-CURRENT EXPERIENCE:
-{resume.experience or ""}
-
-CURRENT PROJECTS:
-{resume.projects or ""}
-
-Apply all four controls using the property-based detection rules.
-Return only the JSON.\
-"""
-
+      MATCHED KEYWORDS (must each appear naturally at least once in the output):
+      {', '.join(resume.matched_keywords or [])}
+      
+      CURRENT SUMMARY:
+      {resume.summary or ""}
+      
+      CURRENT EXPERIENCE:
+      {resume.experience or ""}
+      
+      CURRENT PROJECTS:
+      {resume.projects or ""}
+      
+      Apply all four controls using the property-based detection rules.
+      Return only the JSON.\
+      """
     try:
         data = await llm_client.call(
             system=CALIBRATION_SYSTEM,
             user=user_msg,
             expect_json=True,
         )
-
         updated = resume.model_dump()
         for field in ["summary", "experience", "projects"]:
             val = data.get(field, "").strip()
             if val:
                 updated[field] = val
-
         # Rule-based skills calibration - no LLM call needed
         if updated.get("skills"):
             updated["skills"] = _calibrate_skills(updated["skills"])
-
         log.info("Calibration applied")
         return TailoredResume(**updated)
-
     except Exception as e:
         log.warning(f"Calibration skipped (resume unchanged): {e}")
         return resume
-
 
 def _calibrate_skills(skills: str) -> str:
     """
@@ -237,7 +227,6 @@ def _calibrate_skills(skills: str) -> str:
     Caps each group at 6 items. Ensures full stop at line end.
     """
     import re
-
     # Detect any prompt engineering sub-technique by property:
     # short technique names inside parentheses after "Prompt Engineering",
     # or listed as standalone items that are sub-methods of prompting.
@@ -247,22 +236,18 @@ def _calibrate_skills(skills: str) -> str:
         r"Prompt Engineering\s*\([^)]+\)",
         re.IGNORECASE,
     )
-
     lines = skills.splitlines()
     calibrated = []
     for line in lines:
         line = line.rstrip()
         if not line:
             continue
-
         # Collapse "Prompt Engineering (sub, techniques, here)" → "Prompt Engineering"
         cleaned = pe_parens.sub("Prompt Engineering", line)
-
         # Clean up comma artifacts
         cleaned = re.sub(r",\s*,", ",", cleaned)
         cleaned = re.sub(r",\s*\.", ".", cleaned)
         cleaned = re.sub(r"\s{2,}", " ", cleaned).strip()
-
         # Cap at 6 items per group line
         if ":" in cleaned:
             label, _, items_str = cleaned.partition(":")
@@ -270,10 +255,7 @@ def _calibrate_skills(skills: str) -> str:
             if len(items) > 6:
                 items = items[:6]
             cleaned = f"{label.strip()}: {', '.join(items)}."
-
         if not cleaned.endswith("."):
             cleaned += "."
-
         calibrated.append(cleaned)
-
     return "\n".join(calibrated)
