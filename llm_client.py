@@ -4,20 +4,14 @@ All three agents (tailor, verifier, validator) go through here.
 """
 
 from __future__ import annotations
-
 import json
 import logging
 import os
 from typing import Any
-
 import anthropic
-
 import config
-
 log = logging.getLogger("llm")
-
 _client: anthropic.AsyncAnthropic | None = None
-
 
 def get_client() -> anthropic.AsyncAnthropic:
     global _client
@@ -31,7 +25,6 @@ def get_client() -> anthropic.AsyncAnthropic:
         _client = anthropic.AsyncAnthropic(api_key=api_key)
     return _client
 
-
 async def call(
     system: str,
     user: str,
@@ -43,22 +36,17 @@ async def call(
     Strips markdown fences before JSON parsing.
     """
     client = get_client()
-
     response = await client.messages.create(
         model=config.MODEL,
         max_tokens=config.MAX_TOKENS,
         system=system,
         messages=[{"role": "user", "content": user}],
     )
-
     raw: str = response.content[0].text.strip()
     log.debug(f"LLM response ({len(raw)} chars)")
-
     if not expect_json:
         return raw
-
     return _parse_json(raw)
-
 
 def _parse_json(raw: str) -> Any:
     """Strip optional markdown fences then parse."""
