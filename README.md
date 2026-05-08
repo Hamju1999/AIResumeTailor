@@ -358,4 +358,4 @@ python main.py                          # full run without UI
 
 **Mohammad Hamza Piracha**
 Data Scientist
-[LinkedIn](https://www.linkedin.com/in/hamzapiracha) | hamzapiracha@live.com
+[LinkedIn](https://www.linkedin.com/in/hamza-piracha)
