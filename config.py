@@ -93,7 +93,7 @@ def is_setup_complete() -> bool:
 def reload():
     """Reload config from disk (called after setup wizard saves new config)."""
     global _cfg, USER_NAME, USER_CONTACT, LINKEDIN_URL, GITHUB_URL, PORTFOLIO_URL
-    global MASTER_RESUME_PATH, FORMAT_TEMPLATE_PATH, ANTHROPIC_API_KEY, LOCATIONS, JOB_TITLES
+    global MASTER_RESUME_PATH, FORMAT_TEMPLATE_PATH, ANTHROPIC_API_KEY, LOCATIONS, JOB_TITLES, EXPERIENCE_LEVEL
     _cfg = _load_user_config()
     USER_NAME            = _cfg.get("full_name", "YOUR NAME")
     USER_CONTACT         = _cfg.get("contact_line", "City, State | phone | email | LinkedIn | GitHub")
