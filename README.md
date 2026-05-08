@@ -357,5 +357,5 @@ python main.py                          # full run without UI
 ## Author
 
 **Mohammad Hamza Piracha**
-Data Scientist | Applied AI Engineer
+Data Scientist
 [LinkedIn](https://www.linkedin.com/in/hamzapiracha) | hamzapiracha@live.com
