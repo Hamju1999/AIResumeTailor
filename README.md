@@ -353,3 +353,9 @@ python main.py --dry-run                # scrape only, no API cost
 python main.py --limit 5               # test with 5 jobs
 python main.py                          # full run without UI
 ```
+
+## Author
+
+**Mohammad Hamza Piracha**
+Data Scientist | Applied AI Engineer
+[LinkedIn](https://www.linkedin.com/in/hamzapiracha) | hamzapiracha@live.com
