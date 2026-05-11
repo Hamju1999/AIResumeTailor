@@ -29,6 +29,7 @@ from calibrator import calibrate
 log = logging.getLogger("pipeline")
 _master_resume:   str = ""
 _format_template: str = ""
+_format_params        = None
 _run_id:          str = ""   # set once in run(), read everywhere
 
 # Content loading 
@@ -112,6 +113,7 @@ async def _process_job(job: Job, include_certs: bool = False) -> JobResult | Fai
                 correction_notes=correction_notes,
                 fmt=_format_params,
                 include_certs=include_certs,
+                visa_mode=config.VISA_MODE,
             )
             # Auto-fix hyphens and semicolons before any validation.
             resume = _sanitize_resume(resume)

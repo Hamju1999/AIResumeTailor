@@ -292,11 +292,27 @@ def tailor_user(
     format_template: str,
     correction_notes: str = "",
     include_certs: bool = False,
+    visa_mode: str = "off",
 ) -> str:
     correction_block = (
         f"\n\nCORRECTION NOTES FROM PREVIOUS ATTEMPT - fix every item:\n{correction_notes}"
         if correction_notes else ""
     )
+    visa_block = ""
+    if visa_mode != "off":
+        visa_block = """
+
+    VISA SPONSORSHIP CONTEXT:
+    This application is being submitted with the intent to secure STEM OPT or H1B sponsorship.
+    When writing the resume, ensure:
+      - The summary or experience naturally demonstrates high-value, specialized technical skills
+        that justify sponsorship (employers sponsor when they cannot easily find domestic talent).
+      - Emphasise depth and specificity of technical expertise — the more specialized and 
+        demonstrably skilled, the stronger the sponsorship case.
+      - Do not explicitly mention visa status or sponsorship need in the resume text itself —
+        that belongs in the cover letter, not the resume.
+      - Frame contributions as high-impact and hard-to-replace where the master resume supports it.
+    """
     include_certs_label = "Yes - include relevant certifications" if include_certs else "No - use freed space to add the most JD-relevant project, experience bullet, or skill group instead"  
     return f"""\
       MASTER RESUME - source of truth, use only this:
@@ -318,6 +334,7 @@ def tailor_user(
       ---
       {job_description}
       ---
+      {visa_block}
       {correction_block}
       
       Follow the build order. Project bullets: 3 per project, start with '- ', max 15 words each. \

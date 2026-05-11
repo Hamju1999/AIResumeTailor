@@ -61,7 +61,13 @@ def index():
     redir = _redirect_if_not_setup()
     if redir:
         return redir
-    return render_template("index.html")
+    existing = {}
+    if config.USER_CONFIG_PATH.exists():
+        try:
+            existing = json.loads(config.USER_CONFIG_PATH.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+    return render_template("index.html", existing=existing)
 
 @app.route("/setup", methods=["GET"])
 def setup():
@@ -72,6 +78,19 @@ def setup():
         except Exception:
             pass
     return render_template("setup.html", existing=existing)
+
+@app.route("/api/config")
+def api_config():
+    cfg = {}
+    if config.USER_CONFIG_PATH.exists():
+        try:
+            cfg = json.loads(config.USER_CONFIG_PATH.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+    return jsonify({
+        "visa_mode":        cfg.get("visa_mode", "off"),
+        "experience_level": cfg.get("experience_level", "entry"),
+    })
 
 @app.route("/api/setup", methods=["POST"])
 def api_setup():
@@ -132,6 +151,7 @@ def api_setup():
             "locations":             locations,
             "job_titles":            job_titles,
             "experience_level":      form.get("experience_level", "entry"),
+            "visa_mode":             form.get("visa_mode", "off"),
             "anthropic_api_key":     form.get("anthropic_api_key", "").strip(),
         }
         config.USER_CONFIG_PATH.write_text(

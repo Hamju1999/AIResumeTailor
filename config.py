@@ -72,6 +72,12 @@ JOB_TITLES: list[str] = _cfg.get("job_titles") or [
 # Experience level (entry / mid / senior)
 EXPERIENCE_LEVEL: str = _cfg.get("experience_level", "entry")
 
+# Visa sponsorship targeting 
+# "off"      = no filtering, apply to all companies
+# "flag"     = scrape all, but mark sponsor-friendly companies in results
+# "filter"   = only process jobs at known H1B/STEM OPT sponsors
+VISA_MODE: str = _cfg.get("visa_mode", "off") 
+
 # Pipeline controls
 MAX_RETRIES           = 2
 SCRAPE_DELAY_SEC      = 1.5
@@ -93,7 +99,7 @@ def is_setup_complete() -> bool:
 def reload():
     """Reload config from disk (called after setup wizard saves new config)."""
     global _cfg, USER_NAME, USER_CONTACT, LINKEDIN_URL, GITHUB_URL, PORTFOLIO_URL
-    global MASTER_RESUME_PATH, FORMAT_TEMPLATE_PATH, ANTHROPIC_API_KEY, LOCATIONS, JOB_TITLES, EXPERIENCE_LEVEL
+    global MASTER_RESUME_PATH, FORMAT_TEMPLATE_PATH, ANTHROPIC_API_KEY, LOCATIONS, JOB_TITLES, EXPERIENCE_LEVEL, VISA_MODE
     _cfg = _load_user_config()
     USER_NAME            = _cfg.get("full_name", "YOUR NAME")
     USER_CONTACT         = _cfg.get("contact_line", "City, State | phone | email | LinkedIn | GitHub")
@@ -106,3 +112,4 @@ def reload():
     LOCATIONS            = _cfg.get("locations") or LOCATIONS
     JOB_TITLES           = _cfg.get("job_titles") or JOB_TITLES
     EXPERIENCE_LEVEL     = _cfg.get("experience_level", "entry")
+    VISA_MODE = _cfg.get("visa_mode", "off")

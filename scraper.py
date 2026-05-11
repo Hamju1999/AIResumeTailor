@@ -25,6 +25,7 @@ import requests
 from bs4 import BeautifulSoup
 import config
 from models import Job, RawJob
+import visa_sponsors as vs
 log = logging.getLogger("scraper")
 
 # Filter patterns 
@@ -125,6 +126,14 @@ async def discover_jobs() -> list[Job]:
         "handshake":   _scrape_handshake,
         "interstride": _scrape_interstride,
     }
+    # Pre-load sponsor list once for the whole scrape
+    _sponsors: set[str] | None = None
+    if config.VISA_MODE in ("flag", "filter"):
+        try:
+            _sponsors = vs.load_sponsors()
+            log.info(f"Visa mode '{config.VISA_MODE}' — {len(_sponsors):,} known sponsors loaded")
+        except Exception as e:
+            log.warning(f"Sponsor list load failed: {e}")
     active = [b for b in config.JOB_BOARDS if b in scrapers]
     if not active:
         log.warning("No supported boards in config.JOB_BOARDS")
@@ -162,6 +171,19 @@ async def discover_jobs() -> list[Job]:
     log.info(f"After relevance filter: {len(relevant)}")
     log.info(f"After seniority filter: {len(levelled)}")
     log.info(f"After dedup:            {len(jobs)}")
+    # Visa sponsorship filtering / flagging
+    if config.VISA_MODE != "off" and _sponsors is not None:
+        flagged = []
+        for job in jobs:
+            label = vs.sponsorship_label(job.company, _sponsors)
+            if config.VISA_MODE == "filter" and label == "unlikely_sponsor":
+                log.debug(f"Skipped (unlikely sponsor): {job.company}")
+                continue
+            flagged.append(job)
+        if config.VISA_MODE == "filter":
+            log.info(f"Visa filter: {len(jobs) - len(flagged)} jobs removed, "
+                     f"{len(flagged)} remaining")
+        jobs = flagged
     return jobs
 
 # LinkedIn
