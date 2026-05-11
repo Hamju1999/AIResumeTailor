@@ -456,6 +456,15 @@
             <input type="checkbox" id="includeCerts" style="width:15px;height:15px;cursor:pointer;accent-color:var(--accent)">
             <label for="includeCerts" style="margin:0;cursor:pointer;font-size:12px;color:var(--muted)">Include certifications (optional - only if relevant to the JD)</label>
           </div>
+          <div class="field">
+            <label>Visa sponsorship targeting</label>
+            <select name="visa_mode" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:9px 13px;outline:none;">
+              <option value="off">Off - apply to all companies</option>
+              <option value="flag">Flag - show sponsorship likelihood in results</option>
+              <option value="filter">Filter - only apply to known H1B/STEM OPT sponsors</option>
+            </select>
+            <div class="hint">Uses USCIS public H1B employer data. "Filter" removes unlikely sponsors from results. "Flag" shows a label on each result.</div>
+          </div>
         </div>
 
         <!-- Custom URLs tab -->
@@ -471,6 +480,15 @@
             <input type="checkbox" id="includeCertsCustom" style="width:15px;height:15px;cursor:pointer;accent-color:var(--accent)">
             <label for="includeCertsCustom" style="margin:0;cursor:pointer;font-size:12px;color:var(--muted)">Include certifications (optional - only if relevant to the JD)</label>
           </div>
+          <div class="field">
+            <label>Visa sponsorship targeting</label>
+            <select name="visa_mode" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:9px 13px;outline:none;">
+              <option value="off">Off - apply to all companies</option>
+              <option value="flag">Flag - show sponsorship likelihood in results</option>
+              <option value="filter">Filter - only apply to known H1B/STEM OPT sponsors</option>
+            </select>
+            <div class="hint">Uses USCIS public H1B employer data. "Filter" removes unlikely sponsors from results. "Flag" shows a label on each result.</div>
+          </div>
         </div>
 
         <!-- Paste JD tab -->
@@ -485,6 +503,15 @@
           <div style="margin-top:10px;display:flex;align-items:center;gap:8px">
             <input type="checkbox" id="includeCertsPaste" style="width:15px;height:15px;cursor:pointer;accent-color:var(--accent)">
             <label for="includeCertsPaste" style="margin:0;cursor:pointer;font-size:12px;color:var(--muted)">Include certifications (optional - only if relevant to the JD)</label>
+          </div>
+          <div class="field">
+            <label>Visa sponsorship targeting</label>
+            <select name="visa_mode" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:9px 13px;outline:none;">
+              <option value="off">Off - apply to all companies</option>
+              <option value="flag">Flag - show sponsorship likelihood in results</option>
+              <option value="filter">Filter - only apply to known H1B/STEM OPT sponsors</option>
+            </select>
+            <div class="hint">Uses USCIS public H1B employer data. "Filter" removes unlikely sponsors from results. "Flag" shows a label on each result.</div>
           </div>
         </div>
 
@@ -666,7 +693,8 @@ async function startRun() {
                           : currentMode === 'custom'
                             ? document.getElementById('includeCertsCustom')?.checked
                             : document.getElementById('includeCertsPaste')?.checked,
-  };
+    visa_mode:         document.querySelector('#tab-' + currentMode + ' select[name="visa_mode"]')?.value || 'off',
+    };
 
   const res = await fetch('/api/run', {
     method:  'POST',
@@ -892,6 +920,13 @@ async function scanATS(runId, jobId, btn) {
     document.getElementById('progressWrap').style.display = '';
     document.getElementById('runBtn').disabled = true;
   }
+
+  // Pre-select visa mode from saved config
+  try {
+    const cfg = await (await fetch('/api/config')).json();
+    const sel = document.getElementById('visaMode');
+    if (sel && cfg.visa_mode) sel.value = cfg.visa_mode;
+  } catch(e) {}
 })();
 </script>
 </body>

@@ -176,6 +176,15 @@
         </select>
         <div class="hint">Controls which jobs are scraped and how the resume is framed.</div>
       </div>
+      <div class="field">
+        <label>Visa sponsorship targeting</label>
+        <select name="visa_mode" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:9px 13px;outline:none;">
+          <option value="off"    {% if existing.get('visa_mode','off') == 'off'    %}selected{% endif %}>Off - apply to all companies</option>
+          <option value="flag"   {% if existing.get('visa_mode','off') == 'flag'   %}selected{% endif %}>Flag - show sponsorship likelihood in results</option>
+          <option value="filter" {% if existing.get('visa_mode','off') == 'filter' %}selected{% endif %}>Filter - only apply to known H1B/STEM OPT sponsors</option>
+        </select>
+        <div class="hint">Uses USCIS public H1B employer data. "Filter" removes unlikely sponsors from results. "Flag" shows a label on each result.</div>
+      </div>
     </div>
 
     <!-- API KEY -->
