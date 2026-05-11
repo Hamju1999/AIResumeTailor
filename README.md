@@ -11,7 +11,8 @@ ResTail automatically scrapes job listings and tailors your resume to each job u
 5. Lets you paste job URLs you found yourself to bypass scraping
 6. Lets you paste job description you found yourself to bypass scraping
 7. Lets you run ATS scan.
-
+8. Automatically identifies H1B-friendly employers using USCIS records to filter or flag opportunities based on historical data.
+   
 ## Requirements
 
 - Python 3.10 or higher
