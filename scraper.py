@@ -20,6 +20,7 @@ import re
 import time
 from datetime import datetime, timedelta, timezone
 from typing import Optional
+from unittest import result
 from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup
@@ -175,8 +176,8 @@ async def discover_jobs() -> list[Job]:
     if config.VISA_MODE != "off" and _sponsors is not None:
         flagged = []
         for job in jobs:
-            label = vs.sponsorship_label(job.company, _sponsors)
-            if config.VISA_MODE == "filter" and label == "unlikely_sponsor":
+            result = vs.sponsorship_label(job.company, jd_text=job.description, sponsors=_sponsors)
+            if config.VISA_MODE == "filter" and result["verdict"] == "skip":
                 log.debug(f"Skipped (unlikely sponsor): {job.company}")
                 continue
             flagged.append(job)

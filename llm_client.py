@@ -7,6 +7,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 from typing import Any
 import anthropic
 import config
@@ -78,14 +79,46 @@ async def call(system, user, *, expect_json=True):
     raise RuntimeError("LLM call failed after 4 attempts (rate limit or overload)")
 
 def _parse_json(raw: str) -> Any:
-    """Strip optional markdown fences then parse."""
-    text = raw
-    if text.startswith("```"):
-        lines = text.split("\n")
-        # drop first line (```json or ```) and last line (```)
-        text = "\n".join(lines[1:-1] if lines[-1].strip() == "```" else lines[1:])
+    """
+    Extract and parse JSON from the response.
+    Handles: clean JSON, markdown-fenced JSON, and JSON preceded by
+    reasoning text (which Claude sometimes outputs despite instructions).
+    """
+    text = raw.strip()
+    # 1. Direct parse — clean JSON
     try:
         return json.loads(text)
-    except json.JSONDecodeError as e:
-        log.error(f"JSON parse failed: {e}\nRaw response:\n{raw[:500]}")
-        raise
+    except json.JSONDecodeError:
+        pass
+    # 2. Markdown fenced — ```json ... ``` or ``` ... ```
+    if text.startswith("```"):
+        lines = text.split("\n")
+        inner = "\n".join(lines[1:-1] if lines[-1].strip() == "```" else lines[1:])
+        try:
+            return json.loads(inner.strip())
+        except json.JSONDecodeError:
+            pass
+    # 3. JSON embedded after reasoning text — find outermost { ... }
+    brace_start = text.find('{')
+    if brace_start != -1:
+        depth = 0
+        for i, ch in enumerate(text[brace_start:], brace_start):
+            if ch == '{':
+                depth += 1
+            elif ch == '}':
+                depth -= 1
+                if depth == 0:
+                    candidate = text[brace_start:i + 1]
+                    try:
+                        return json.loads(candidate)
+                    except json.JSONDecodeError:
+                        break
+    # 4. JSON inside markdown block preceded by reasoning
+    match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', text, re.DOTALL)
+    if match:
+        try:
+            return json.loads(match.group(1))
+        except json.JSONDecodeError:
+            pass
+    log.error(f"JSON parse failed — no valid JSON found.\nRaw response:\n{raw[:500]}")
+    raise json.JSONDecodeError("No valid JSON found in response", text, 0)

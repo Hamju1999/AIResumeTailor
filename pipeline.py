@@ -18,6 +18,7 @@ import scraper
 import tailor
 import verifier
 import validator
+import company_intel as ci
 from models import (
     FailedJob, Job, JobResult, JobStatus, PipelineRun, TailoredResume,
 )
@@ -26,6 +27,7 @@ import format_parser
 from format_parser import FormatParams
 from grammar_fixer import fix_grammar
 from calibrator import calibrate
+from company_intel import CompanyIntel
 log = logging.getLogger("pipeline")
 _master_resume:   str = ""
 _format_template: str = ""
@@ -100,6 +102,12 @@ async def _process_job(job: Job, include_certs: bool = False) -> JobResult | Fai
     Phases 3→4→5 for a single job with retry loop.
     On verification or validation failure: inject correction notes and re-tailor.
     """
+    # Gather company intelligence once before the retry loop
+    intel: CompanyIntel = await ci.gather(
+        company_name=job.company,
+        job_title=job.title,
+        jd_text=job.description,
+    )
     correction_notes = ""
     last_status      = JobStatus.PENDING
     for attempt in range(1, config.MAX_RETRIES + 2):
@@ -114,6 +122,7 @@ async def _process_job(job: Job, include_certs: bool = False) -> JobResult | Fai
                 fmt=_format_params,
                 include_certs=include_certs,
                 visa_mode=config.VISA_MODE,
+                company_intel=intel,
             )
             # Auto-fix hyphens and semicolons before any validation.
             resume = _sanitize_resume(resume)

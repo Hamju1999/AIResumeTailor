@@ -41,6 +41,9 @@ Before writing anything, carefully read the full job description and note:
       Mid = owns a domain, leads small work, delivers independently.
       Senior = leads teams/systems, strategic scope acceptable.
   (f) ATS PRE-WRITE AUDIT — complete this before writing a single section:
+      Complete all F1–F5 steps as INTERNAL reasoning only.
+      Do NOT output the audit steps, lists, or analysis as text.
+      Output ONLY the final JSON object — nothing before it, nothing after it.
 
       STEP F1 — EXTRACT JD TERMS:
       Read the full job description. Identify two lists:
@@ -293,6 +296,7 @@ def tailor_user(
     correction_notes: str = "",
     include_certs: bool = False,
     visa_mode: str = "off",
+    company_intel=None,
 ) -> str:
     correction_block = (
         f"\n\nCORRECTION NOTES FROM PREVIOUS ATTEMPT - fix every item:\n{correction_notes}"
@@ -314,6 +318,11 @@ def tailor_user(
       - Frame contributions as high-impact and hard-to-replace where the master resume supports it.
     """
     include_certs_label = "Yes - include relevant certifications" if include_certs else "No - use freed space to add the most JD-relevant project, experience bullet, or skill group instead"  
+    intel_block = ""
+    if company_intel is not None:
+        intel_block = f"\n\n{company_intel.to_prompt_block()}"
+        if company_intel.raw_summary:
+            intel_block += f"\nResume advice for this company: {company_intel.raw_summary}"
     return f"""\
       MASTER RESUME - source of truth, use only this:
       ---
@@ -329,6 +338,7 @@ def tailor_user(
       Company:   {company}
       Job Title: {job_title}
       Include Certifications: {include_certs_label}
+      {intel_block}
       
       JOB DESCRIPTION:
       ---

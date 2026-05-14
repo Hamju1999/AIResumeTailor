@@ -35,7 +35,7 @@ _run_state = {
 }
 _log_queue: queue.Queue = queue.Queue()
 _state_lock = threading.Lock()
-
+_sponsorship_cache: dict = {}  
 class QueueHandler(logging.Handler):
     def emit(self, record):
         msg = self.format(record)
@@ -236,9 +236,16 @@ def api_download(run_id: str, file_type: str):
 @app.route("/api/ats-score/<run_id>/<job_id>")
 def api_ats_score(run_id: str, job_id: str):
     import ats_scorer
-    manifest_path = config.OUTPUT_DIR / f"manifest_{run_id}.json"
+    # Resolve to absolute path to avoid Windows relative-path issues
+    manifest_path = Path(config.OUTPUT_DIR).resolve() / f"manifest_{run_id}.json"
+    logging.getLogger("ats").debug(f"Looking for manifest: {manifest_path}")
     if not manifest_path.exists():
-        return jsonify({"error": "Run not found"}), 404
+        # Fallback: search output dir for matching manifest
+        alt = config.OUTPUT_DIR / f"manifest_{run_id}.json"
+        if not Path(alt).exists():
+            logging.getLogger("ats").warning(f"Manifest not found at {manifest_path}")
+            return jsonify({"error": f"Run not found (checked: {manifest_path})"}), 404
+        manifest_path = alt
     try:
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     except Exception as e:
@@ -319,6 +326,10 @@ def api_history():
             pass
     return jsonify(runs)
 
+@app.route("/api/sponsorship/<job_id>")
+def api_sponsorship(job_id: str):
+    return jsonify(_sponsorship_cache.get(job_id, {"verdict": "unknown", "summary": ""}))
+
 # Pipeline runner
 def _run_pipeline(custom_urls: list[str], limit: int, paste_jd: str = "", paste_title: str = "", paste_company: str = "", include_certs: bool = False) -> None:
     log = logging.getLogger("ui.runner")
@@ -337,7 +348,7 @@ def _run_pipeline(custom_urls: list[str], limit: int, paste_jd: str = "", paste_
                 "status": "done", "run_id": manifest.run_id,
                 "total": manifest.total_found, "passed": manifest.total_passed,
                 "failed": manifest.total_failed, "finished": datetime.now().isoformat(),
-                "results":  [_job_result_dict(r) for r in manifest.results],
+                "results":  [_job_result_dict(r, _sponsorship_cache.get(r.job.job_id)) for r in manifest.results],
                 "failures": [_failed_job_dict(f) for f in manifest.failures],
             })
     except Exception as exc:
@@ -423,7 +434,10 @@ async def _run_custom_urls(urls: list[str]):
     run_id = uuid.uuid4().hex[:8]
     pl._run_id = run_id
     results, failures = [], []
+    import company_intel as ci
     for i, job in enumerate(jobs):
+        intel = await ci.gather(company_name=job.company, job_title=job.title, jd_text=job.description)
+        _sponsorship_cache[job.job_id] = intel.sponsorship if intel else {}
         outcome = await pl._process_job(job, include_certs=_run_state.get("include_certs", False))
         if hasattr(outcome, "resume_path"):
             results.append(outcome)
@@ -458,6 +472,10 @@ async def _run_paste_jd(jd_text: str, title: str, company: str):
         board="paste",
         job_id=job_id,
     )
+    # Gather company intel (sponsorship + context)
+    import company_intel as ci
+    intel = await ci.gather(company_name=company, job_title=title, jd_text=jd_text)
+    _sponsorship_cache[job.job_id] = intel.sponsorship if intel else {}
     log.info(f"Processing pasted JD: {title} @ {company}")
     run_id = uuid.uuid4().hex[:8]
     pl._run_id = run_id
@@ -473,13 +491,14 @@ async def _run_paste_jd(jd_text: str, title: str, company: str):
     pl._save_outputs(manifest)
     return manifest
 
-def _job_result_dict(r) -> dict:
+def _job_result_dict(r, sponsorship: dict = None) -> dict:
     docx_path = Path(r.resume_path) if r.resume_path else None
     return {
         "title": r.job.title, "company": r.job.company, "board": r.job.board,
         "job_id": r.job.job_id,
         "location": r.job.location or "", "job_url": r.job.job_url,
         "resume_file": docx_path.name if docx_path else "", "attempts": r.attempts,
+        "sponsorship":  sponsorship or {"verdict": "unknown", "summary": ""},
     }
 
 def _failed_job_dict(f) -> dict:
