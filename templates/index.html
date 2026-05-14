@@ -559,12 +559,13 @@
               <th>Board</th>
               <th>Status</th>
               <th>Resume</th>
+              <th>Visa</th>
               <th>ATS Score</th>
               <th>Link</th>
             </tr>
           </thead>
           <tbody id="resultsTbody">
-            <tr><td colspan="7"><div class="empty"><div class="empty-icon">📭</div>No results yet. Run the pipeline first.</div></td></tr>
+            <tr><td colspan="8"><div class="empty"><div class="empty-icon">📭</div>No results yet. Run the pipeline first.</div></td></tr>
           </tbody>
         </table>
       </div>
@@ -800,7 +801,7 @@ function updateResultsPanel(state) {
   // Results table
   const tbody = document.getElementById('resultsTbody');
   if (!state.results?.length) {
-    tbody.innerHTML = '<tr><td colspan="7"><div class="empty"><div class="empty-icon">📭</div>No passed results.</div></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8"><div class="empty"><div class="empty-icon">📭</div>No passed results.</div></td></tr>';
   } else {
     tbody.innerHTML = state.results.map(r => `
       <tr>
@@ -810,7 +811,17 @@ function updateResultsPanel(state) {
         <td><span class="badge badge-passed">✓ Passed</span></td>
         <td><a href="/api/download/${state.run_id}/docx/${escHtml(r.job_id)}" download style="font-size:12px">⬇ DOCX</a></td>
         <td>
+          ${(() => {
+            const v = r.sponsorship?.verdict || 'unknown';
+            const vc = v === 'apply' ? 'var(--success)' : v === 'skip' ? 'var(--danger)' : 'var(--warn)';
+            const vl = v === 'apply' ? '✓ Sponsor' : v === 'skip' ? '✗ No Sponsor' : '? Unknown';
+            const vs = escHtml(r.sponsorship?.summary || '');
+            return `<span style="font-size:10px;font-weight:600;color:${vc}" title="${vs}">${vl}</span>`;
+          })()}
+        </td>
+        <td>
           <button class="btn btn-ghost btn-sm" onclick="scanATS('${state.run_id}','${escHtml(r.job_id)}',this)">Scan</button>
+          <span id="ats-pct-${escHtml(r.job_id)}" style="font-size:13px;font-weight:700;margin-left:6px"></span>
           <div id="ats-${escHtml(r.job_id)}" style="display:none;margin-top:6px;font-size:11px"></div>
         </td>
         <td><a href="${escHtml(r.job_url)}" target="_blank" style="font-size:12px">Open ↗</a></td>
@@ -876,6 +887,7 @@ async function scanATS(runId, jobId, btn) {
     const res  = await fetch(`/api/ats-score/${runId}/${jobId}`);
     const data = await res.json();
     btn.style.display = 'none';
+    const pctSpan = document.getElementById(`ats-pct-${jobId}`);
     const box = document.getElementById(`ats-${jobId}`);
     if (data.error) {
       box.innerHTML = `<span style="color:var(--danger)">${escHtml(data.error)}</span>`;
@@ -897,6 +909,11 @@ async function scanATS(runId, jobId, btn) {
         ${status}${hscore}${missing}`;
     }
     box.style.display = 'block';
+    if (pctSpan && !data.error) {
+      const c = data.score >= 75 ? 'var(--success)' : data.score >= 50 ? 'var(--warn)' : 'var(--danger)';
+      pctSpan.textContent = `${data.score}%`;
+      pctSpan.style.color = c;
+    }
   } catch(e) {
     btn.textContent = 'Scan';
     btn.disabled = false;
@@ -917,12 +934,18 @@ async function scanATS(runId, jobId, btn) {
     document.getElementById('progressWrap').style.display = '';
     document.getElementById('runBtn').disabled = true;
   }
-
-  // Pre-select visa mode from saved config
+  // Pre-select visa mode dropdowns from saved config
   try {
     const cfg = await (await fetch('/api/config')).json();
-    const sel = document.getElementById('visaMode');
-    if (sel && cfg.visa_mode) sel.value = cfg.visa_mode;
+    if (cfg.visa_mode) {
+      document.querySelectorAll('select[name="visa_mode"]').forEach(sel => {
+        sel.value = cfg.visa_mode;
+      });
+    }
+    if (cfg.experience_level) {
+      const el = document.getElementById('expLevel');
+      if (el) el.value = cfg.experience_level;
+    }
   } catch(e) {}
 })();
 </script>
