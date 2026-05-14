@@ -4,14 +4,15 @@ ResTail automatically scrapes job listings and tailors your resume to each job u
 
 ## What it does
 
-1. Scrapes LinkedIn, Indeed, Dice, Glassdoor, Interstride and Handshake for entry-level to senior-level jobs matching your titles
-2. Filters by location priority, date (last 7 days)
-3. For each job: tailors your resume using 5 AI passes (tailor → grammar → verify → calibrate → validate)
-4. Produces a formatted `.docx` resume for every passing job
+1. Scrapes LinkedIn, Indeed, Dice, Glassdoor, Interstride and Handshake for entry-level to senior-level jobs matching your titles.
+2. Filters by location priority, date (last 7 days).
+3. For each job: gathers company intelligence (domain, tech stack, culture signals, sponsorship verdict) then tailors your resume using 6 AI passes (tailor → grammar → verify → calibrate → validate → ATS audit).
+4. Produces a formatted `.docx` resume for every passing job.
 5. Lets you paste job URLs you found yourself to bypass scraping
-6. Lets you paste job description you found yourself to bypass scraping
+6. Lets you paste job description you found yourself to bypass scraping.
 7. Lets you run ATS scan.
 8. Automatically identifies H1B-friendly employers using USCIS records to filter or flag opportunities based on historical data.
+9. Detects visa sponsorship language in job descriptions and cross-references employers against USCIS H1B records, E-Verify participation data, and H1B Grader to flag or filter sponsorship-unlikely companies.
    
 ## Requirements
 
@@ -131,6 +132,8 @@ The wizard asks for:
 | Locations | Cities to search, in priority order |
 | Job Titles | Job titles to search for |
 | API Key | Your Anthropic API key |
+| Experience level | Entry level / Mid / Senior - controls which jobs are scraped and how the resume is framed |
+| Visa sponsorship | Off / Flag / Filter - uses USCIS public H1B data to label or remove unlikely sponsors |
 
 After saving, your config is stored in `user_config.json` locally. You never need to fill this in again unless you want to change something.
 
@@ -149,7 +152,7 @@ PERSONAL INFORMATION
 Full name, city, phone, email, LinkedIn, GitHub, Portfolio
 
 EDUCATION
-For each institution:
+ institution:
   Institution name, city, country
   Degree name - Graduation date
   GPA (if above 3.5), honors, awards (Dean's List, Silver Medalist, etc.)
@@ -241,9 +244,12 @@ You can customise this to match your preferred format. The AI will follow whatev
 1. Open **http://localhost:5000**
 2. Click **Full scrape**
 3. Set a limit (e.g. 3 for a test run, 0 for all jobs)
-4. Click **Start**
-5. Watch the live log stream while it runs
-6. Download resumes from the **Results** panel when done
+4. Optional before clicking Start:
+  - Check Include certifications if the role values formal certifications
+  - Set Visa sponsorship targeting to Flag or Filter if you need sponsorship
+5. Click **Start**
+6. Watch the live log stream while it runs
+7. Download resumes from the **Results** panel when done
 
 ### My job links mode (recommended for fresh jobs)
 
@@ -252,9 +258,24 @@ You can customise this to match your preferred format. The AI will follow whatev
 3. Go to the **My job links** tab
 4. Paste the URL and click **Add**
 5. Add more URLs if needed
-6. Click **Start**
+6. Optional before clicking Start:
+  - Check Include certifications if the role values formal certifications
+  - Set Visa sponsorship targeting to Flag or Filter if you need sponsorship
+7. Click **Start**
 
 This skips scraping entirely and goes straight to AI tailoring. Useful for jobs posted hours ago.
+
+### Job Description mode (when the link doesn't load)
+
+1. Go to the **Job Description tab**
+2. Enter the company name and job title
+3. Paste the full job description text
+4. Optional before clicking Start:
+  - Check Include certifications if the role values formal certifications
+  - Set Visa sponsorship targeting to Flag or Filter if you need sponsorship
+5. Click **Start**
+
+The AI uses the pasted text directly. Useful for JavaScript-rendered pages (Ashby, Greenhouse) that the scraper cannot access.
 
 ### History
 
@@ -299,8 +320,7 @@ pip3 install -r requirements.txt         # Mac/Linux
 **"401 Invalid authentication credentials":**
 Your API key is wrong or missing. Go to `/setup` and re-enter it.
 
-**"No .docx files - nothing to zip" (all jobs failed):**
-Open the manifest JSON in `output/manifest_*.json` and check the `failures` array for the specific reason.
+**"All jobs failed"**: Open the manifest JSON in output/manifest_*.json and check the failures array for the specific reason. Common causes: JSON parse error (Claude output reasoning instead of JSON - rerun), rate limit timeout, or verification failure.
 
 **App won't start - port already in use:**
 Something else is running on port 5000. Either stop it, or change the port in `app.py` (last line: `port=5000`).
@@ -314,11 +334,30 @@ Check the live log for "Verification FAILED" or "Validation FAILED" messages wit
 AIResumeTailor/
 ├── app.py                  ← Start here: python app.py
 ├── config.py               ← Reads from user_config.json
-├── user_config.json        ← Your personal settings (created by setup wizard)
+├── pipeline.py             ← Orchestrates all AI phases per job
+├── scraper.py              ← Scrapes 6 job boards
+├── tailor.py               ← Resume tailoring agent
+├── verifier.py             ← Factual accuracy checker
+├── validator.py            ← Format rules checker
+├── calibrator.py           ← Tone and credibility calibrator
+├── grammar_fixer.py        ← Grammar and punctuation pass
+├── format_parser.py        ← Reads format template dynamically
+├── company_intel.py        ← Gathers company context before tailoring
+├── visa_sponsors.py        ← H1B / STEM OPT / E-Verify checks
+├── ats_scorer.py           ← Dynamic ATS keyword scoring
+├── resume_builder.py       ← Renders .docx from tailored resume
+├── llm_client.py           ← Anthropic SDK wrapper with rate limiting
+├── models.py               ← Pydantic data models
+├── prompts.py              ← All LLM system prompts
+├── pdf_reader.py           ← Extracts text from PDF uploads
+├── main.py                 ← CLI entry point
+├── user_config.json        ← Your personal settings (gitignored)
 ├── master_resume.txt       ← Your resume source file (uploaded in setup)
 ├── format_template.txt     ← Format spec (uploaded in setup)
-├── output/                 ← All generated resumes and run data
-│   └── resumes/<run_id>/   ← .docx files per run
+├── output/
+│   ├── resumes/<run_id>/   ← .docx files per run
+│   ├── manifest_*.json     ← Full run audit trail
+│   └── job_links_*.csv     ← Job links per run
 ├── templates/
 │   ├── index.html          ← Main UI
 │   └── setup.html          ← Setup wizard
@@ -334,15 +373,15 @@ AIResumeTailor/
 
 ## Cost estimate
 
-Each job processed uses approximately 33,000 input tokens across 5 AI passes.
+Each job processed uses approximately 36,000–40,000 input tokens across 7 AI passes (including company intelligence gathering and ATS keyword extraction). With a large master resume (70k+ chars) the token estimate per job is higher and the rate limiter will add automatic pauses between calls.
 At Anthropic's current pricing for claude-sonnet-4-6:
 
 | Jobs | Estimated cost |
 |------|---------------|
-| 5    | ~$0.15        |
-| 20   | ~$0.60        |
-| 50   | ~$1.50        |
-| 100  | ~$3.00        |
+| 5    | ~$0.20       |
+| 20   | ~$0.80        |
+| 50   | ~$2.00        |
+| 100  | ~$4.00        |
 
 Use `--limit 3` or the limit field in the UI to test before running large batches.
 
