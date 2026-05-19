@@ -283,6 +283,7 @@ def _build_tailor_system(fmt=None) -> str:
         .replace('<PROJ_COUNT_INSTRUCTION>',     proj_count_instr)
         .replace('<MAX_PROJECTS>',               str(fmt.max_projects))
         .replace('<PROJ_BULLETS>',               str(fmt.project_bullets))
+        .replace('Academic Projects',            fmt.section_labels.get('projects', 'Academic Projects'))
         .replace('<EXP_MIN>',                    str(fmt.exp_bullets_min))
         .replace('<EXP_MAX>',                    str(fmt.exp_bullets_max))
     )
