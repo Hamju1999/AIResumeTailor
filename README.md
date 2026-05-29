@@ -371,18 +371,6 @@ AIResumeTailor/
 - `user_config.json` is gitignored - it is never pushed to GitHub
 - The app is only accessible at `localhost:5000` - not visible to anyone else on the internet
 
-## Cost estimate
-
-Each job processed uses approximately 36,000–40,000 input tokens across 7 AI passes (including company intelligence gathering and ATS keyword extraction). With a large master resume (70k+ chars) the token estimate per job is higher and the rate limiter will add automatic pauses between calls.
-At Anthropic's current pricing for claude-sonnet-4-6:
-
-| Jobs | Estimated cost |
-|------|---------------|
-| 5    | ~$0.20       |
-| 20   | ~$0.80        |
-| 50   | ~$2.00        |
-| 100  | ~$4.00        |
-
 Use `--limit 3` or the limit field in the UI to test before running large batches.
 
 ## CLI (advanced)
