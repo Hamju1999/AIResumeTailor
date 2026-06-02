@@ -382,6 +382,9 @@ python main.py --limit 5               # test with 5 jobs
 python main.py                          # full run without UI
 ```
 
+## License
+[MIT](./LICENSE) © 2026 Mohammad Hamza Piracha
+
 ## Author
 
 **Mohammad Hamza Piracha** |
