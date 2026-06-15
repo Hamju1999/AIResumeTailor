@@ -6,7 +6,7 @@ ResTail automatically scrapes job listings and tailors your resume to each job u
 
 1. Scrapes LinkedIn, Indeed, Dice, Glassdoor, Interstride and Handshake for entry-level to senior-level jobs matching your titles.
 2. Filters by location priority, date (last 7 days).
-3. For each job: gathers company intelligence (domain, tech stack, culture signals, sponsorship verdict) then tailors your resume using 6 AI passes (tailor → grammar → verify → calibrate → validate → ATS audit).
+3. For each job: gathers company intelligence (domain, tech stack, culture signals, sponsorship verdict) then tailors your resume using a multi-pass AI pipeline (tailor → grammar → verify → calibrate → skills rebuild → validate), with a separate on-demand ATS scan.
 4. Produces a formatted `.docx` resume for every passing job.
 5. Lets you paste job URLs you found yourself to bypass scraping
 6. Lets you paste job description you found yourself to bypass scraping.
@@ -342,6 +342,7 @@ AIResumeTailor/
 ├── calibrator.py           ← Tone and credibility calibrator
 ├── grammar_fixer.py        ← Grammar and punctuation pass
 ├── format_parser.py        ← Reads format template dynamically
+├── skills_builder.py       ← Rebuilds skills from the master's picked-project 
 ├── company_intel.py        ← Gathers company context before tailoring
 ├── visa_sponsors.py        ← H1B / STEM OPT / E-Verify checks
 ├── ats_scorer.py           ← Dynamic ATS keyword scoring
