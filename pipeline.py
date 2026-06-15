@@ -10,6 +10,7 @@ from __future__ import annotations
 import asyncio
 import csv
 import logging
+import re
 import uuid
 from datetime import datetime
 from pathlib import Path
@@ -27,7 +28,9 @@ import format_parser
 from format_parser import FormatParams
 from grammar_fixer import fix_grammar
 from calibrator import calibrate
-from company_intel import CompanyIntel
+import skills_builder
+import llm_client
+import prompts
 log = logging.getLogger("pipeline")
 _master_resume:   str = ""
 _format_template: str = ""
@@ -97,19 +100,26 @@ async def run() -> PipelineRun:
     return manifest
 
 # Per-job processing (Phases 3-5) 
-async def _process_job(job: Job, include_certs: bool = False) -> JobResult | FailedJob:
+async def _process_job(job: Job, include_certs: bool = False, intel=None) -> JobResult | FailedJob:
     """
     Phases 3→4→5 for a single job with retry loop.
     On verification or validation failure: inject correction notes and re-tailor.
     """
     # Gather company intelligence once before the retry loop
-    intel: CompanyIntel = await ci.gather(
-        company_name=job.company,
-        job_title=job.title,
-        jd_text=job.description,
-    )
-    correction_notes = ""
+    if intel is None:
+        intel = await ci.gather(
+            company_name=job.company,
+            job_title=job.title,
+            jd_text=job.description,
+        )
+    content_notes = ""   
+    format_notes  = "" 
     last_status      = JobStatus.PENDING
+    ver = None
+    val = None
+    best_resume  = None   
+    best_ver     = None
+    best_val     = None
     for attempt in range(1, config.MAX_RETRIES + 2):
         try:
             # Phase 3 - Tailor
@@ -118,7 +128,7 @@ async def _process_job(job: Job, include_certs: bool = False) -> JobResult | Fai
                 job=job,
                 master_resume=_master_resume,
                 format_template=_format_template,
-                correction_notes=correction_notes,
+                correction_notes=_combine_notes(content_notes, format_notes),
                 fmt=_format_params,
                 include_certs=include_certs,
                 visa_mode=config.VISA_MODE,
@@ -137,31 +147,93 @@ async def _process_job(job: Job, include_certs: bool = False) -> JobResult | Fai
             last_status = JobStatus.VERIFYING
             ver = await verifier.verify_resume(resume, _master_resume, job.description)
             if not ver.passed:
-                correction_notes = _merge(correction_notes, ver.correction_prompt)
+                content_notes = ver.correction_prompt
                 if attempt <= config.MAX_RETRIES:
                     log.info(f"Retry {attempt}/{config.MAX_RETRIES} (verification): {job.title} @ {job.company}")
                     await asyncio.sleep(config.INTER_AGENT_DELAY_SEC)
                     continue
                 return FailedJob(
                     job=job, last_status=JobStatus.VERIFYING, attempts=attempt,
-                    reason="Verification failed: " + "; ".join(i.claim for i in ver.issues[:2]),
+                    reason="Verification failed: " + "; ".join(i.claim for i in (ver.issues[:2] if ver else [])),
                 )
             # Calibration runs AFTER verification - tone/abstraction fix on verified content.
             await asyncio.sleep(config.INTER_AGENT_DELAY_SEC)
+            # Snapshot pre-calibration text to detect injected claims afterward
+            _pre_cal = (
+                f"summary: {resume.summary or ''}\n"
+                f"experience: {resume.experience or ''}\n"
+                f"projects: {resume.projects or ''}"
+            )
             resume = await calibrate(resume, job_description=job.description)
             await asyncio.sleep(config.INTER_AGENT_DELAY_SEC)
+            # Post-calibration claim check — non-blocking, warns and corrects only.
+            # Catches specific facts injected by Control 3b that bypassed the verifier.
+            try:
+                _post_cal = (
+                    f"summary: {resume.summary or ''}\n"
+                    f"experience: {resume.experience or ''}\n"
+                    f"projects: {resume.projects or ''}"
+                )
+                _cal_check = await llm_client.call(
+                    system=prompts.POST_CAL_CHECK_SYSTEM,
+                    user=(
+                        f"PRE-CALIBRATION RESUME:\n---\n{_pre_cal}\n---\n\n"
+                        f"POST-CALIBRATION RESUME:\n---\n{_post_cal}\n---\n\n"
+                        f"Identify any specific facts injected by calibration. Output only the JSON."
+                    ),
+                    expect_json=True,
+                )
+                if not _cal_check.get("clean", True):
+                    _injected = _cal_check.get("injected_claims", [])
+                    log.warning(
+                        f"Post-calibration check: {len(_injected)} injected claim(s) removed "
+                        f"for {job.title} @ {job.company}"
+                    )
+                    _data = resume.model_dump()
+                    for _item in _injected:
+                        _field      = _item.get("field", "")
+                        _claim      = _item.get("claim", "").strip()
+                        _correction = _item.get("correction", "").strip()
+                        if _field in _data and _correction and _claim:
+                            _current = _data.get(_field) or ""
+                            # Find the bullet containing the injected claim and replace it
+                            _lines = _current.splitlines()
+                            _fixed = []
+                            for _ln in _lines:
+                                if _claim in _ln:
+                                    # Use the LLM-provided correction for this bullet
+                                    _m = re.match(r"^(\s*(?:[-•]\s*)?)", _ln)
+                                    _prefix = _m.group(1) if _m else ""
+                                    _corr = _correction.lstrip("-•").lstrip()
+                                    _fixed.append(f"{_prefix}{_corr}" if _prefix.strip() else _correction)
+                                    log.debug(f"  Removed injected claim: '{_claim}'")
+                                else:
+                                    _fixed.append(_ln)
+                            _data[_field] = "\n".join(_fixed)
+                    resume = TailoredResume(**_data)
+            except Exception as _ce:
+                log.debug(f"Post-calibration check skipped ({type(_ce).__name__}): {_ce}")
+            # Rebuild skills from the master's full descriptions of the picked projects/experience (recovers real skills the bullets compressed out, excludes anything from unpicked work). Input-scoped, with an evidence backstop.
+            try:
+                _new_skills = await skills_builder.build_skills(
+                    resume, _master_resume, _format_params, job.description
+                )
+                resume = resume.model_copy(update={"skills": _new_skills})
+            except Exception as _se:
+                log.debug(f"Skills rebuild skipped ({type(_se).__name__}): {_se}")
             # Phase 5 - Validate (on calibrated output)
             last_status = JobStatus.VALIDATING
             val = await validator.validate_resume(resume, _format_template, _format_params)
+            best_resume, best_ver, best_val = resume, ver, val
             if not val.passed:
-                correction_notes = _merge(correction_notes, val.correction_prompt)
+                format_notes = val.correction_prompt
                 if attempt <= config.MAX_RETRIES:
                     log.info(f"Retry {attempt}/{config.MAX_RETRIES} (validation): {job.title} @ {job.company}")
                     await asyncio.sleep(config.INTER_AGENT_DELAY_SEC)
                     continue
-                return FailedJob(
-                    job=job, last_status=JobStatus.VALIDATING, attempts=attempt,
-                    reason="Validation failed: " + "; ".join(i.description[:80] for i in val.issues[:2]),
+                return _ship_or_fail(
+                    job, best_resume, best_ver, best_val, attempt, JobStatus.VALIDATING,
+                    "Validation failed: " + "; ".join(i.description[:80] for i in (val.issues[:2] if val else [])),
                 )
             # All passed - build docx
             resume_path = _resume_path(job)
@@ -174,14 +246,14 @@ async def _process_job(job: Job, include_certs: bool = False) -> JobResult | Fai
         except Exception as exc:
             log.error(f"Error attempt {attempt} for {job.job_id}: {exc}", exc_info=True)
             if attempt > config.MAX_RETRIES:
-                return FailedJob(
-                    job=job, last_status=last_status, attempts=attempt,
-                    reason=f"Exception: {type(exc).__name__}: {str(exc)[:120]}",
+                return _ship_or_fail(
+                    job, best_resume, best_ver, best_val, attempt, JobStatus.VERIFYING,
+                    "Verification failed: " + "; ".join(i.claim for i in (ver.issues[:2] if ver else [])),
                 )
             wait = config.INTER_AGENT_DELAY_SEC * (attempt + 1)
             log.info(f"Waiting {wait}s before retry {attempt + 1}...")
             await asyncio.sleep(wait)
-            correction_notes = f"Previous attempt raised: {exc}. Fix and retry."
+            content_notes = f"Previous attempt raised: {exc}. Fix and retry."
     return FailedJob(
         job=job, last_status=last_status, attempts=config.MAX_RETRIES + 1,
         reason="Exhausted all retries.",
@@ -219,10 +291,35 @@ def _resume_path(job: Job) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     return path
 
-def _merge(a: str, b: str) -> str:
-    if not a: return b
-    if not b: return a
-    return f"{a}\n\nAdditional corrections:\n{b}"
+def _ship_or_fail(job, resume, ver, val, attempts, last_status, reason):
+    """Best-effort output. If a verified resume exists, ship it even when a
+    later gate flagged a minor issue. Only truly fail when nothing was ever
+    verified - the truth boundary is never bypassed."""
+    if resume is not None:
+        resume_path = _resume_path(job)
+        build_docx(resume, resume_path, fmt=_format_params)
+        log.warning(f"Shipping best-effort resume ({reason}) for {job.title} @ {job.company}")
+        return JobResult(
+            job=job, resume=resume, resume_path=str(resume_path),
+            status=JobStatus.PASSED, attempts=attempts,
+            verification=ver, validation=val,
+        )
+    log.error(f"No verified resume to ship for {job.title} @ {job.company}: {reason}")
+    return FailedJob(job=job, last_status=last_status, attempts=attempts, reason=reason)
+
+def _combine_notes(content: str, fmt: str) -> str:
+    parts = []
+    if content:
+        parts.append(
+            "CONTENT CORRECTIONS (factual accuracy - keep every claim traceable to the master resume):\n"
+            + content
+        )
+    if fmt:
+        parts.append(
+            "FORMAT CORRECTIONS (length/structure only - do NOT drop or alter facts to satisfy these):\n"
+            + fmt
+        )
+    return "\n\n".join(parts)
 
 # Text sanitization
 def _sanitize_resume(resume: TailoredResume) -> TailoredResume:
@@ -246,15 +343,7 @@ def _sanitize_resume(resume: TailoredResume) -> TailoredResume:
             data[field] = val
     return TailoredResume(**data)
 
-# Compound adjectives whose hyphens are grammatically correct - keep them
-_KEEP_HYPHENATED = {
-    "end-to-end", "large-scale", "small-scale", "two-stage", "multi-stage",
-    "real-time", "state-of-the-art", "high-fidelity", "high-performance",
-    "high-quality", "high-stakes", "rule-based", "data-driven",
-    "entry-level", "cross-functional", "open-source", "well-defined",
-    "long-term", "short-term", "full-stack",
-}
-
+from grammar_fixer import KEEP_HYPHENATED as _KEEP_HYPHENATED
 def _fix_hyphens(text: str) -> str:
     """
     Remove unnecessary hyphens but preserve:

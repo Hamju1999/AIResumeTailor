@@ -86,40 +86,41 @@ async def validate_resume(
             suggestion=f"Trim to exactly {fmt.summary_sentences} sentences.",
         ))
 
-    #  5. Project bullet count - dynamic 
-    projects_text = resume.projects or ""
-    proj_flagged = False
-    for block in re.split(r"\n\n+", projects_text):
-        bullet_lines = [
-            l.strip() for l in block.splitlines()
-            if l.strip() and l.strip().startswith("- ")
-        ]
-        bc = len(bullet_lines)
-        if bc > 0 and bc != fmt.project_bullets:
-            issues.append(ValidationIssue(
-                category="length",
-                description=(
-                    f"A project has {bc} bullet points. "
-                    f"Format requires exactly {fmt.project_bullets}."
-                ),
-                suggestion=(
-                    f"Write exactly {fmt.project_bullets} bullet points per project, "
-                    "each starting with '- '."
-                ),
-            ))
-            proj_flagged = True
-            break
-        for bl in bullet_lines:
-            if len(bl[2:].split()) > 20:
+    #  5. Project bullet count - dynamic
+    projects_text = resume.projects or ""  
+    if getattr(fmt, "writing_style", "bullets") == "bullets":
+        proj_flagged = False
+        for block in re.split(r"\n\n+", projects_text):
+            bullet_lines = [
+                l.strip() for l in block.splitlines()
+                if l.strip() and l.strip().startswith("- ")
+            ]
+            bc = len(bullet_lines)
+            if bc > 0 and bc != fmt.project_bullets:
                 issues.append(ValidationIssue(
                     category="length",
-                    description=f"A project bullet is too long (max 15 words).",
-                    suggestion="Shorten to under 15 words. Keep action verb and key tool.",
+                    description=(
+                        f"A project has {bc} bullet points. "
+                        f"Format requires exactly {fmt.project_bullets}."
+                    ),
+                    suggestion=(
+                        f"Write exactly {fmt.project_bullets} bullet points per project, "
+                        "each starting with '- '."
+                    ),
                 ))
                 proj_flagged = True
                 break
-        if proj_flagged:
-            break
+            for bl in bullet_lines:
+                if len(bl[2:].split()) > 15:
+                    issues.append(ValidationIssue(
+                        category="length",
+                        description=f"A project bullet is too long (max 15 words).",
+                        suggestion="Shorten to under 15 words. One idea per bullet.",
+                    ))
+                    proj_flagged = True
+                    break
+            if proj_flagged:
+                break
 
     # 6. Project count - dynamic 
     heading_count = sum(
@@ -137,56 +138,57 @@ async def validate_resume(
         ))
 
     # 7. Experience bullet count per role - dynamic
-    exp_text  = resume.experience or ""
-    current_bullets: list[str] = []
-    exp_flagged = False
-    for line in exp_text.splitlines():
-        stripped = line.strip()
-        if not stripped:
-            continue
-        if _is_heading_line(stripped):
-            if current_bullets:
-                bc = len(current_bullets)
-                if bc < fmt.exp_bullets_min or bc > fmt.exp_bullets_max:
-                    issues.append(ValidationIssue(
-                        category="length",
-                        description=(
-                            f"An experience role has {bc} bullet points. "
-                            f"Format requires {fmt.exp_bullets_min} to {fmt.exp_bullets_max}."
-                        ),
-                        suggestion=(
-                            f"Write {fmt.exp_bullets_min} to {fmt.exp_bullets_max} bullets "
-                            "each starting with '- ' and an action verb."
-                        ),
-                    ))
-                    exp_flagged = True
-                    break
-            current_bullets = []
-        elif stripped.startswith("- "):
-            current_bullets.append(stripped)
-    if not exp_flagged and current_bullets:
-        bc = len(current_bullets)
-        if bc < fmt.exp_bullets_min or bc > fmt.exp_bullets_max:
-            issues.append(ValidationIssue(
-                category="length",
-                description=(
-                    f"An experience role has {bc} bullet points. "
-                    f"Format requires {fmt.exp_bullets_min} to {fmt.exp_bullets_max}."
-                ),
-                suggestion=(
-                    f"Write {fmt.exp_bullets_min} to {fmt.exp_bullets_max} bullets "
-                    "each starting with '- ' and an action verb."
-                ),
-            ))
-        else:
-            for bl in current_bullets:
-                if len(bl[2:].split()) > 20:
-                    issues.append(ValidationIssue(
-                        category="length",
-                        description="An experience bullet is too long (max 15 words).",
-                        suggestion="Shorten to under 15 words.",
-                    ))
-                    break
+    if getattr(fmt, "writing_style", "bullets") == "bullets":
+        exp_text  = resume.experience or ""
+        current_bullets: list[str] = []
+        exp_flagged = False
+        for line in exp_text.splitlines():
+            stripped = line.strip()
+            if not stripped:
+                continue
+            if _is_heading_line(stripped):
+                if current_bullets:
+                    bc = len(current_bullets)
+                    if bc < fmt.exp_bullets_min or bc > fmt.exp_bullets_max:
+                        issues.append(ValidationIssue(
+                            category="length",
+                            description=(
+                                f"An experience role has {bc} bullet points. "
+                                f"Format requires {fmt.exp_bullets_min} to {fmt.exp_bullets_max}."
+                            ),
+                            suggestion=(
+                                f"Write {fmt.exp_bullets_min} to {fmt.exp_bullets_max} bullets "
+                                "each starting with '- ' and an action verb."
+                            ),
+                        ))
+                        exp_flagged = True
+                        break
+                current_bullets = []
+            elif stripped.startswith("- "):
+                current_bullets.append(stripped)
+        if not exp_flagged and current_bullets:
+            bc = len(current_bullets)
+            if bc < fmt.exp_bullets_min or bc > fmt.exp_bullets_max:
+                issues.append(ValidationIssue(
+                    category="length",
+                    description=(
+                        f"An experience role has {bc} bullet points. "
+                        f"Format requires {fmt.exp_bullets_min} to {fmt.exp_bullets_max}."
+                    ),
+                    suggestion=(
+                        f"Write {fmt.exp_bullets_min} to {fmt.exp_bullets_max} bullets "
+                        "each starting with '- ' and an action verb."
+                    ),
+                ))
+            else:
+                for bl in current_bullets:
+                    if len(bl[2:].split()) > 20:
+                        issues.append(ValidationIssue(
+                            category="length",
+                            description="An experience bullet is too long (max 20 words).",
+                            suggestion="Shorten to under 20 words.",
+                        ))
+                        break
 
     # 8. Overall length - dynamic page limit
     all_text   = " ".join([
@@ -218,6 +220,11 @@ async def validate_resume(
 # Helpers 
 def _is_heading_line(line: str) -> bool:
     if not line:
+        return False
+    # Skip section-level labels (contain "Projects", "Experience", "Skills" as last word)
+    _label_words = {"projects", "experience", "skills", "education", "work", "portfolio"}
+    if line.split()[-1].lower().rstrip("s") in _label_words or \
+       any(line.lower().endswith(w) for w in [" projects", " experience", " skills"]):
         return False
     if " | " in line:
         return True

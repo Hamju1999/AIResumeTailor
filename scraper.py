@@ -40,16 +40,8 @@ _SENIOR_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
-# At least one of these must be in the job title for it to be relevant
-_DS_KEYWORD_PATTERN = re.compile(
-    r"\b("
-    r"data|scientist|analyst|analytics|engineer|"
-    r"machine\s+learning|\bml\b|\bai\b|artificial\s+intelligence|"
-    r"nlp|llm|deep\s+learning|big\s+data|"
-    r"applied|research|quantitative|statistician|bioinformat|computational"
-    r")\b",
-    re.IGNORECASE,
-)
+# Relevance is determined dynamically by _is_relevant_title() below, which matches
+# against the user's configured JOB_TITLES - so the scraper is field-agnostic.
 
 # Company names matching these patterns indicate spam or low-quality aggregators
 _SPAM_COMPANY_PATTERN = re.compile(
@@ -72,7 +64,7 @@ def _is_relevant_title(title: str) -> bool:
         for word in target.lower().split():
             if len(word) > 3 and word in title_lower:
                 return True
-    return True  
+    return False  
 def _is_spam_company(company: str) -> bool:
     return bool(_SPAM_COMPANY_PATTERN.search(company.strip()))
 

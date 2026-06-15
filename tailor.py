@@ -37,11 +37,13 @@ async def tailor_resume(
         include_certs=include_certs,
         visa_mode=visa_mode,
         company_intel=company_intel,
+        fmt=fmt
     )
     data = await llm_client.call(
-        system=prompts.get_tailor_system(fmt),
+        system=prompts.get_tailor_system(fmt, include_certs=include_certs),
         user=user_msg,
         expect_json=True,
+        temperature=0.4,
     )
     return TailoredResume(
         name=data.get("name", ""),
@@ -51,6 +53,7 @@ async def tailor_resume(
         skills=data.get("skills", ""),
         experience=data.get("experience", ""),
         projects=data.get("projects", ""),
+        projects_label=data.get("projects_label", "Projects"),
         education=data.get("education", ""),
         certifications=data.get("certifications"),
         matched_keywords=data.get("matched_keywords", []),

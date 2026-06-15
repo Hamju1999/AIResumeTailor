@@ -49,6 +49,7 @@ class TailoredResume(BaseModel):
     skills:        str           # formatted as per template
     experience:    str
     projects:      str
+    projects_label: str = "Projects" 
     education:     str
     certifications: Optional[str] = None
     # Metadata - not rendered, used by verifier / validator

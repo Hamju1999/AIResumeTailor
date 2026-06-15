@@ -25,7 +25,7 @@ log = logging.getLogger("grammar_fixer")
 KEEP_HYPHENATED = {
     "end-to-end", "large-scale", "small-scale", "two-stage", "multi-stage",
     "real-time", "state-of-the-art", "high-fidelity", "high-performance",
-    "high-quality", "high-stakes", "large-scale", "rule-based", "data-driven",
+    "high-quality", "high-stakes", "rule-based", "data-driven",
     "entry-level", "cross-functional", "open-source", "well-defined",
     "long-term", "short-term", "full-stack", "on-demand", "plug-in",
 }

@@ -53,6 +53,7 @@ class FormatParams:
         "projects":   "Academic Projects",
     })
     raw_notes:         str        = ""     # parser's notes for debugging
+    writing_style:     str        = "bullets"   # always "bullets"
 
 # Pages → approximate line count proxy used by the validator
 _PAGE_LINES = {1: 65, 2: 130, 3: 195}
@@ -120,6 +121,7 @@ Output ONLY valid JSON - no preamble, no explanation.
     "projects":   "<heading for the projects section>"
   }
   "notes": "<one sentence: anything unusual about this format that the tailor should know>"
+  "writing_style": "bullets",
 }
 
 Rules for section_labels:
@@ -139,6 +141,9 @@ Rules for max_pages:
   1 = US/Canada standard (one page strict)
   2 = common for mid-level or detailed formats
   3 = Australian, UK, New Zealand, or explicitly multi-page formats
+  
+Rules for writing_style:
+  Always return "bullets". This field is fixed.
 """
 
 def _groups_are_explicit(groups) -> bool:
@@ -184,6 +189,7 @@ def _build_params(data: dict) -> FormatParams:
             "projects":   "Academic Projects",
         },
         raw_notes         = data.get("notes") or "",
+        writing_style = data.get("writing_style") or "bullets",
     )
 
 def _infer_from_text(text: str) -> FormatParams:
@@ -241,5 +247,6 @@ def _infer_from_text(text: str) -> FormatParams:
         exp_bullets_min   = 4,
         exp_bullets_max   = 5,
         summary_sentences = 2,
+        writing_style = "bullets",
         raw_notes         = "Inferred from text (LLM parsing unavailable)",
     )

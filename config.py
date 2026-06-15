@@ -79,7 +79,7 @@ EXPERIENCE_LEVEL: str = _cfg.get("experience_level", "entry")
 VISA_MODE: str = _cfg.get("visa_mode", "off") 
 
 # Pipeline controls
-MAX_RETRIES           = 2
+MAX_RETRIES           = 1
 SCRAPE_DELAY_SEC      = 1.5
 INTER_JOB_DELAY_SEC   = 8
 INTER_AGENT_DELAY_SEC = 3

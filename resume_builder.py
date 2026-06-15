@@ -59,12 +59,13 @@ def build_docx(resume: TailoredResume, output_path: Path, fmt=None) -> Path:
     labels = getattr(fmt, "section_labels", {})
     lbl_skills     = labels.get("skills",     "Technical Skills")
     lbl_experience = labels.get("experience", "Professional Experience")
-    lbl_projects   = labels.get("projects",   "Academic Projects")
+    lbl_projects   = getattr(resume, "projects_label", None) or labels.get("projects", "Projects")
     output_path.parent.mkdir(parents=True, exist_ok=True)
     doc = Document()
     _set_margins(doc)
     _clear_styles(doc)
     _name_line(doc, resume.name)
+    _title_line(doc, resume.target_title)
     _contact_line(doc, resume.contact)
     _section(doc, "Summary", resume.summary,lambda d, c: _render_paragraph(d, c))
     _section(doc, lbl_skills,      resume.skills,      lambda d, c: _render_skills(d, c))
@@ -181,6 +182,16 @@ def _contact_line(doc: Document, contact: str) -> None:
             _hyperlink_run(p, part, url, CONTACT_SIZE)
         else:
             _run(p, part, CONTACT_SIZE)
+
+# Title            
+def _title_line(doc: Document, title: str) -> None:
+    """Centered job title - 12pt, not bold, sits between contact and Summary."""
+    if not title or not title.strip():
+        return
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    _body_sp(p, before=2, after=5)
+    _run(p, title.strip(), SUBHEADING_SIZE, bold=False)
 
 # Section frame 
 def _section(doc: Document, heading: str, content: str, renderer) -> None:

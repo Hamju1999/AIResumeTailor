@@ -9,7 +9,7 @@ from __future__ import annotations
 import config
 
 # Tailor Agent
-TAILOR_SYSTEM = """You are an expert resume writer for data science and AI/ML roles.
+TAILOR_SYSTEM = """You are an expert resume writer for professional roles across any industry.
 Produce a concise, honest, resume uniquely tailored to the job description,
 using ONLY information present in the master resume.
 <PAGE_NOTE>
@@ -40,14 +40,14 @@ Before writing anything, carefully read the full job description and note:
       Entry = intern/grad tone, concrete scope markers, no inflated seniority.
       Mid = owns a domain, leads small work, delivers independently.
       Senior = leads teams/systems, strategic scope acceptable.
-  (f) ATS PRE-WRITE AUDIT — complete this before writing a single section:
+  (f) ATS PRE-WRITE AUDIT - complete this before writing a single section:
       Complete all F1–F5 steps as INTERNAL reasoning only.
       Do NOT output the audit steps, lists, or analysis as text.
-      Output ONLY the final JSON object — nothing before it, nothing after it.
+      Output ONLY the final JSON object - nothing before it, nothing after it.
 
-      STEP F1 — EXTRACT JD TERMS:
+      STEP F1 - EXTRACT JD TERMS:
       Read the full job description. Identify two lists:
-        List A — Hard terms: every specific tool, platform, method, certification,
+        List A - Hard terms: every specific tool, platform, method, certification,
                  system, software, and technical phrase the JD names explicitly.
                  These vary by field:
                    Data/Analytics: SQL, data warehouse, data mining, SSRS, HIPAA
@@ -55,58 +55,59 @@ Before writing anything, carefully read the full job description and note:
                    Architecture:   Revit, BIM, IBC code compliance, schematic design
                    Software:       REST API, CI/CD, Kubernetes, microservices
                    Healthcare:     EHR, HL7, FHIR, IRB, clinical outcomes
-                 Extract whatever hard terms THIS JD contains — do not assume a field.
-        List B — Soft terms: every competency, methodology, and work style the JD
+                 Extract whatever hard terms THIS JD contains - do not assume a field.
+        List B - Soft terms: every competency, methodology, and work style the JD
                  lists under requirements, responsibilities, or minimum qualifications.
                  Examples across fields: critical thinking, collaboration, problem solving,
                  decision making, troubleshooting, stakeholder communication,
                  cross-functional teamwork, attention to detail, analytical thinking.
 
-      STEP F2 — MAP EACH TERM TO MASTER RESUME EVIDENCE:
+      STEP F2 - MAP EACH TERM TO MASTER RESUME EVIDENCE:
       For every term in List A and List B, ask:
         "Does the master resume contain work that this term honestly describes?"
       If yes → COMMIT it. That term goes in the output.
       If no  → skip it. Never fabricate.
       This is vocabulary alignment, not invention. The same work can be described
-      with the employer's words or your own words — always use the employer's words.
+      with the employer's words or your own words - always use the employer's words.
 
-      STEP F3 — PLACE COMMITTED TERMS BEFORE WRITING:
+      STEP F3 - PLACE COMMITTED TERMS BEFORE WRITING:
       Before writing any section, decide where each committed term goes:
         Summary     → 3-5 terms that define the match between your background
                       and this specific role and field
-        Skills      → all committed hard terms that are tools, platforms, methods
+        Skills      → built in STEP 4 from the bullets you actually write, not here.
+                      Do NOT pre-commit skills to this section from the master at large.
         Experience  → committed terms that describe work done in the listed role
         Projects    → committed terms that describe work done in the listed projects
       Every committed term must appear at least once. If a term has no obvious
       home, place it in the summary or add it naturally to a skills line.
 
-      STEP F4 — VOCABULARY LOCK (field-agnostic rules):
+      STEP F4 - VOCABULARY LOCK (field-agnostic rules):
       The ATS does not understand synonyms. For every committed term, use the
-      JD's exact wording — not a paraphrase, not an equivalent, not an abbreviation
+      JD's exact wording - not a paraphrase, not an equivalent, not an abbreviation
       unless the JD itself uses that abbreviation.
 
       Apply these universal substitution rules:
         If the JD uses a specific noun phrase (e.g. "data warehouse", "structural
-          analysis", "building information modeling", "load testing") — use that
+          analysis", "building information modeling", "load testing") - use that
           exact phrase, not a near-equivalent.
         If the JD uses a verb form (e.g. "troubleshooting", "collaborating",
-          "documenting") — use that verb form, not "fixed issues" or "worked with".
+          "documenting") - use that verb form, not "fixed issues" or "worked with".
         If the JD lists a soft skill by name (e.g. "critical thinking", "decision
-          making", "problem solving") — use those exact words in at least one bullet
+          making", "problem solving") - use those exact words in at least one bullet
           or in the summary. Do not describe the skill without naming it.
-        If the JD names a tool or platform — name it exactly. Do not describe what
+        If the JD names a tool or platform - name it exactly. Do not describe what
           it does instead of naming it.
-        If the JD repeats a term more than twice — that term is high priority. It
+        If the JD repeats a term more than twice - that term is high priority. It
           must appear in the resume at least twice (summary + one other section).
 
       To apply STEP F4 correctly, do this for each committed term:
         1. Write down the JD's exact wording for this term.
         2. Write down how your draft currently describes this concept.
-        3. If they differ — replace your wording with the JD's wording.
+        3. If they differ - replace your wording with the JD's wording.
 
-      STEP F5 — SELF-CHECK BEFORE OUTPUTTING JSON:
+      STEP F5 - SELF-CHECK BEFORE OUTPUTTING JSON:
       Count committed terms. Count how many appear in your draft.
-      If fewer than 80% of committed terms appear — revise before outputting.
+      If fewer than 80% of committed terms appear - revise before outputting.
       Identify which committed terms are missing, then add each one naturally
       to the weakest bullet in the most relevant section.
       Only output the JSON when 80%+ of committed terms are present.
@@ -134,6 +135,9 @@ Every project bullet must have a result signal - either a scope marker (dataset 
 or a functional outcome (what the output enabled, what problem it solved).
 A bullet with no number and no outcome is incomplete.
 
+VERB GUIDANCE for projects: prefer Developed, Analyzed, Implemented, Designed, Automated, Modeled, Evaluated, Integrated.
+Avoid repeating the same verb across project bullets.
+
 CRITICAL FORMAT FOR PROJECTS IN JSON:
 The project name MUST be on its own separate line.
 Each bullet on its own line starting with "- ".
@@ -151,6 +155,18 @@ Always include the most recent internship or work experience from the master res
 JD ALIGNMENT: Lead with whichever aspect of the role matches THIS JD most closely.
 Order bullets by JD relevance. Reorder and rephrase for each job.
 
+STRONG ACTION VERBS - choose verbs that match what was actually done:
+  Achieving / delivering:   Delivered, Reduced, Improved, Accelerated, Optimized, Automated, Eliminated, Saved
+  Building / creating:      Developed, Built, Designed, Constructed, Implemented, Deployed, Integrated, Configured
+  Analyzing / investigating:Analyzed, Examined, Diagnosed, Identified, Evaluated, Assessed, Quantified, Modeled
+  Processing / handling:    Processed, Extracted, Transformed, Consolidated, Migrated, Ingested, Validated, Cleaned
+  Supporting / collaborating:Collaborated, Partnered, Supported, Assisted, Coordinated, Documented, Presented, Reported
+  Problem solving:          Resolved, Debugged, Troubleshot, Investigated, Corrected, Remediated, Streamlined, Standardized
+
+Do NOT use the same verb more than twice across all bullets in the entire resume.
+Lead with the most result-oriented verb available - "Reduced manual entry time" beats "Handled data entry".
+The verb sets the tone for the entire bullet. Choose it deliberately.
+
 CRITICAL FORMAT FOR EXPERIENCE IN JSON:
 Role header MUST be on its own line, then each bullet on its own line starting with "- ".
 Example:
@@ -158,13 +174,29 @@ Example:
   - Built X using Y to achieve Z.
   - Implemented A and B to support C.
 
-STEP 4 - SKILLS:
-List only skills that: appear in the selected projects and experience above,
-exist in the master resume, and align with this JD.
+STEP 4 - SKILLS (build from your own bullets + the master skills inventory):
+Do NOT free-list skills. Build this section by procedure:
+  1. Re-read every PROJECT and EXPERIENCE bullet you wrote in STEPS 2-3.
+  2. From those bullets ONLY, extract each distinct tool, library, language, method,
+     framework, or technique you actually named or clearly used to do that work.
+  3. For each one, find its canonical name in the master resume's skills inventory
+     (the categorized blocks: "AI, LLM & NLP Engineering", "Data Science & Big Data",
+     "Machine Learning & Forecasting", "Statistical Rigor & Research", "Software &
+     Full-Stack Development") and use that exact inventory wording.
+  4. List ONLY those matched skills. An inventory entry you did NOT use in any bullet
+     above MUST NOT appear - e.g. do not list Apache Spark, SparklyR, or PCA unless a
+     bullet you wrote uses it.
+  5. Do not include a parenthetical sub-tool unless that exact sub-tool is in a bullet.
+     If a bullet uses "SQL" but not MySQL/SQLite, list "SQL", not "SQL (MySQL, SQLite)".
+The skills section is a strict reflection of the bullets on this page, named with the
+master inventory's vocabulary - never a broader summary of the master.
+FINAL SKILLS CHECK: For every skill item, point to the exact experience or project
+bullet that demonstrates it. If you cannot point to one, delete the item.
+Skills is a strict subset of the tools and methods named in your bullets - never a superset.
+Do not bundle distinct methods into one item (write "Logistic Regression" as its own
+item, not "Logistic and Ridge/Lasso Regression") so each item maps to one bullet.
 Order items by JD relevance - most important first.
-Within each group, use the JD's exact terminology for skills where possible.
-If the JD says "data modeling" and you know this skill — write "data modeling", not "data modelling".
-If the JD lists specific tools — name them exactly as written in the JD.
+Use the JD's exact terminology where possible.
 Format as exactly these lines, each ending with a full stop:
 <SKILL_GROUPS_INSTRUCTION>
 
@@ -172,32 +204,8 @@ STEP 5 - SUMMARY (written last, based on steps 2 to 4):
 <SUMMARY_INSTRUCTION>
 Must reference something specific from THIS JD. Not generic.
 
-STEP 6 — CERTIFICATIONS AND SPACE FILLING:
-Check the JOB DETAILS field "Include Certifications".
-
-IF certifications are requested (Yes):
-  Include only certs directly relevant to this JD. Plain list, one per line. Maximum 3.
-
-IF certifications are NOT requested (No):
-  Set certifications to null.
-  Use the freed space to add ONE more item from whichever category below
-  most closely aligns with the remaining JD requirements not yet covered:
-
-  Option A — Add a 4th project (if the master resume has a project not yet selected
-    that addresses a JD requirement the current 3 projects do not cover).
-    Same format: project name on its own line, then bullets starting with "- ".
-
-  Option B — Add 1 extra bullet to the experience role (if the JD has a requirement
-    the current experience bullets do not address, and the master resume supports it).
-    Same format: "- " prefix, action verb, max 15 words.
-
-  Option C — Add a 4th skill group line (if the JD requires a category of skills
-    not represented in the current 3 skill groups, and the master resume supports it).
-    Same format: GroupName: item1, item2, item3.
-
-  Choose whichever option fills the most meaningful gap between the resume and the JD.
-  Only choose one. Do not add all three.
-  If none of the options adds genuine value, leave the freed space as-is.
+STEP 6 - CERTIFICATIONS AND SPACE FILLING:
+<STEP6_INSTRUCTION>
 
 SECTION ORDER:
   Name | Contact | Summary | Technical Skills | Professional Experience
@@ -211,7 +219,8 @@ OUTPUT JSON - output nothing except this JSON structure:
   "summary":          "<summary uniquely tailored to this JD>",
   "skills":           "<skill lines matching the format template groups, each ending with full stop>",
   "experience":       "<role header line, then bullets each starting with '- '>",
-  "projects":         "<<MAX_PROJECTS> projects, project name on its own line, <PROJ_BULLETS> bullets each starting with '- ', blank line between projects>",
+  "projects":         "<<MAX_PROJECTS> projects. IMPORTANT: do NOT include the section heading here. Start directly with the first project name on its own line, then bullets. Blank line between projects. Example:\nProject Name One\n- bullet\n- bullet\n- bullet\n\nProject Name Two\n- bullet\n- bullet\n- bullet>",
+  "projects_label":   "<section heading ONLY - NOT in the projects field above. 2-5 words naming the theme shared by the projects you ACTUALLY selected AND echoing the JD's domain or method language. Must be specific to these projects and this role - never the bare word 'Projects'. Examples: 'Econometric & Forecasting Projects', 'Statistical Modeling & Clustering', 'Quantitative Modeling Projects'.>",
   "education":        "<copied exactly from master resume, clean separate lines>",
   "certifications":   "<plain list of top 3 most relevant, one per line, or null>",
   "matched_keywords": ["<jd keyword 1>", "<jd keyword 2>", "<jd keyword 3>"],
@@ -219,19 +228,20 @@ OUTPUT JSON - output nothing except this JSON structure:
 }
 """
 
-def _build_tailor_system(fmt=None) -> str:
+def _build_tailor_system(fmt=None, include_certs: bool = False) -> str:
     """Build tailor prompt with dynamic params from format template parser."""
     from format_parser import FormatParams
     if fmt is None:
         fmt = FormatParams()
     proj_bullet_instr = (
         f"Write EXACTLY {fmt.project_bullets} bullet points per project. "
-        "Each bullet max 15 words."
-        )
+        "Each bullet starts with '- ' and an action verb. "
+        "Target 10-12 words. Hard max 15 words. No first-person 'I'."
+    )
     exp_bullet_instr = (
-        f"Write {fmt.exp_bullets_min} to {fmt.exp_bullets_max} high-impact bullet points per role. "
-        "Each bullet max 15 words. Starts with '- ' and an action verb. No first-person 'I'."
-        )
+        f"Write {fmt.exp_bullets_min} to {fmt.exp_bullets_max} bullet points per role. "
+        "Each bullet starts with '- ' and an action verb. Max 15 words. No first-person 'I'."
+    )
     summary_instr = (
         f"Write EXACTLY {fmt.summary_sentences} first-person sentences. "
         "Each sentence 20-30 words."
@@ -242,9 +252,16 @@ def _build_tailor_system(fmt=None) -> str:
             if fmt.max_pages > 1 else "Strict one-page limit - every word must earn its place.")
         )
     proj_count_instr = (
-        f"Select exactly {fmt.max_projects} projects that most strongly align with the JD. "
-        "If fewer clearly align, pick the strongest and add the next closest."
-        )
+        f"Select exactly {fmt.max_projects} projects that best match THIS specific JD. "
+        "Prioritise in this order:\n"
+        "  1. Domain match - projects in the same industry or problem space as the JD.\n"
+        "  2. Method match - projects using the exact techniques the JD names.\n"
+        "  3. Tool match - projects using tools the JD explicitly lists.\n"
+        "A project that uses a JD-named method (e.g. time-series, clustering, econometrics) "
+        "in a different domain is better than a project in the same domain with irrelevant methods. "
+        "Never pick a project just because it is impressive - pick it because it addresses "
+        "a gap between the JD requirements and what other selected projects already cover."
+    )
     if fmt.skill_groups_fixed:
         # Template specified exact group names - use them as-is
         sg_lines = "\n".join(
@@ -258,7 +275,7 @@ def _build_tailor_system(fmt=None) -> str:
         sg_instruction = (
             f"Create exactly {len(fmt.skill_groups)} skill group lines.\n"
             f"The group NAMES must be determined by the skills actually present in the "
-            f"experience and projects you selected above — not by any predefined list.\n"
+            f"experience and projects you selected above - not by any predefined list.\n"
             f"Rules for naming groups:\n"
             f"  - Look at the tools, languages, and methods in your selected content.\n"
             f"  - Group related skills together and name the group after what it contains.\n"
@@ -269,6 +286,46 @@ def _build_tailor_system(fmt=None) -> str:
             f"'Analytics & Visualization' unless those names genuinely fit the selected content.\n"
             f"  - Do not include a group if it would have fewer than 2 skills.\n"
             f"Each line format: GroupName: item1, item2, item3."
+        )
+    # Build STEP 6 dynamically — only offer options the format actually allows
+    if include_certs:
+        step6_instr = (
+            "IF certifications are requested (Yes):\n"
+            "  Include only certs directly relevant to this JD. "
+            "Plain list, one per line. Maximum 3."
+        )
+    else:
+        options = []
+        if fmt.max_projects >= 4:
+            options.append(
+                "Option A - Add a 4th project (if the master resume has a project not yet\n"
+                "  selected that addresses a JD requirement the current projects do not cover).\n"
+                "  Same format: project name on its own line, then bullets starting with '- '."
+            )
+        if fmt.exp_bullets_max >= 6:
+            options.append(
+                f"Option B - Add 1 extra bullet to the experience role (max {fmt.exp_bullets_max + 1} total)\n"
+                "  if the JD has a requirement not yet addressed and the master resume supports it.\n"
+                "  Same format: '- ' prefix, action verb, max 15 words."
+            )
+        options.append(
+            "Option C - Add a 4th skill group line (if the JD requires a skill category\n"
+            "  not represented in the current groups and the master resume supports it).\n"
+            "  Same format: GroupName: item1, item2, item3."
+        )
+        options.append(
+            "Option D - Strengthen one weak existing bullet by splitting it into two focused\n"
+            "  single-idea bullets (replacing the original). Do not increase the project bullet\n"
+            "  count — split only if the current bullet genuinely covers two separate ideas."
+        )
+        options_text = "\n\n".join(options)
+        step6_instr = (
+            "IF certifications are NOT requested (No):\n"
+            "  Set certifications to null.\n"
+            "  Use the freed space — choose ONE option below that fills the most meaningful\n"
+            "  gap between the resume and the JD:\n\n"
+            f"{options_text}\n\n"
+            "  Only choose one. If none adds genuine value, leave the freed space as-is."
         )
     return (
         TAILOR_SYSTEM
@@ -281,9 +338,9 @@ def _build_tailor_system(fmt=None) -> str:
         .replace('<SUMMARY_INSTRUCTION>',        summary_instr)
         .replace('<PAGE_NOTE>',                  page_note)
         .replace('<PROJ_COUNT_INSTRUCTION>',     proj_count_instr)
+        .replace('<STEP6_INSTRUCTION>',          step6_instr)
         .replace('<MAX_PROJECTS>',               str(fmt.max_projects))
         .replace('<PROJ_BULLETS>',               str(fmt.project_bullets))
-        .replace('Academic Projects',            fmt.section_labels.get('projects', 'Academic Projects'))
         .replace('<EXP_MIN>',                    str(fmt.exp_bullets_min))
         .replace('<EXP_MAX>',                    str(fmt.exp_bullets_max))
     )
@@ -298,6 +355,7 @@ def tailor_user(
     include_certs: bool = False,
     visa_mode: str = "off",
     company_intel=None,
+    fmt=None,
 ) -> str:
     correction_block = (
         f"\n\nCORRECTION NOTES FROM PREVIOUS ATTEMPT - fix every item:\n{correction_notes}"
@@ -312,9 +370,9 @@ def tailor_user(
     When writing the resume, ensure:
       - The summary or experience naturally demonstrates high-value, specialized technical skills
         that justify sponsorship (employers sponsor when they cannot easily find domestic talent).
-      - Emphasise depth and specificity of technical expertise — the more specialized and 
+      - Emphasise depth and specificity of technical expertise - the more specialized and 
         demonstrably skilled, the stronger the sponsorship case.
-      - Do not explicitly mention visa status or sponsorship need in the resume text itself —
+      - Do not explicitly mention visa status or sponsorship need in the resume text itself -
         that belongs in the cover letter, not the resume.
       - Frame contributions as high-impact and hard-to-replace where the master resume supports it.
     """
@@ -324,6 +382,14 @@ def tailor_user(
         intel_block = f"\n\n{company_intel.to_prompt_block()}"
         if company_intel.raw_summary:
             intel_block += f"\nResume advice for this company: {company_intel.raw_summary}"
+    _pb   = fmt.project_bullets if fmt else 3
+    _emin = fmt.exp_bullets_min if fmt else 4
+    _emax = fmt.exp_bullets_max if fmt else 5
+    closing_instr = (
+        f"Project bullets: exactly {_pb} per project, start with '- ', target 12 words, hard max 15. "
+        f"Experience bullets: {_emin}-{_emax} per role, start with '- ', max 15 words each. "
+        "No paragraphs. No first-person 'I'. Bullets only throughout."
+    )
     return f"""\
       MASTER RESUME - source of truth, use only this:
       ---
@@ -348,8 +414,7 @@ def tailor_user(
       {visa_block}
       {correction_block}
       
-      Follow the build order. Project bullets: 3 per project, start with '- ', max 15 words each. \
-      Experience bullets: 4-5, start with '- ', max 15 words each. Output the JSON resume only.\
+      Follow the build order. {closing_instr} Output the JSON resume only.\
       """
 
 # Verifier 
@@ -419,6 +484,45 @@ def verifier_user(
       Output the verification JSON.\
       """
 
-def get_tailor_system(fmt=None) -> str:
+# ── Post-calibration claim check ─────────────────────────────────────────────
+POST_CAL_CHECK_SYSTEM = """\
+You are a resume fact-checker doing a single narrow check.
+A calibration pass has just run on a tailored resume. Your ONLY job is to find
+specific quantitative or factual claims present in the POST-calibration resume
+that are NOT present in the PRE-calibration resume.
+
+You are NOT checking:
+  - Writing style, tone, or verb choice changes
+  - Rephrasing or restructuring of existing content
+  - Logical consequences of described actions that contain no new facts
+    e.g. "reducing manual reconciliation effort" after consolidating workbooks
+         is a restatement of what consolidation does - NOT a new claim.
+    e.g. "enabling automated reporting" after building a pipeline - NOT a new claim.
+
+You ARE checking for new specific facts added by calibration:
+  - Specific numbers (hours, days, percentages, dollar figures, record counts)
+    that appear in post-calibration but NOT in pre-calibration
+  - Specific outcome claims with concrete scope (e.g. "replacing a 3-day process",
+    "saving 40% of analyst time") not present in pre-calibration
+  - Named tools, systems, or proper nouns added that were not in pre-calibration
+
+Output ONLY valid JSON - no preamble, no explanation:
+{
+  "clean": true or false,
+  "injected_claims": [
+    {
+      "field":      "<summary | experience | projects>",
+      "claim":      "<the exact injected phrase - just the addition, not the whole bullet>",
+      "correction": "<the full bullet with the injected phrase removed, keeping the rest intact>"
+    }
+  ]
+}
+
+If zero injected claims: clean=true, injected_claims=[].
+Be conservative - only flag clear specific additions. When in doubt, do not flag.
+Logical consequences of described work are acceptable and must not be flagged.
+"""
+
+def get_tailor_system(fmt=None, include_certs: bool = False) -> str:
     """Returns the tailor system prompt with all dynamic params injected."""
-    return _build_tailor_system(fmt)
+    return _build_tailor_system(fmt, include_certs=include_certs)

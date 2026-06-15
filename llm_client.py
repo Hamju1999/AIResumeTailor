@@ -44,7 +44,7 @@ def _check_token_budget(estimated_tokens: int) -> float:
         return max(wait, 1.0)
     return 0.0
 
-async def call(system, user, *, expect_json=True):
+async def call(system, user, *, expect_json=True, temperature: float = 0.0):
     client = get_client()
     estimated = (len(system) + len(user)) // 4
     wait_secs = _check_token_budget(estimated)
@@ -55,6 +55,7 @@ async def call(system, user, *, expect_json=True):
             response = await client.messages.create(
                 model=config.MODEL,
                 max_tokens=config.MAX_TOKENS,
+                temperature=temperature,
                 system=system,
                 messages=[{"role": "user", "content": user}],
             )

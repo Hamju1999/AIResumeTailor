@@ -7,8 +7,8 @@ Four controls implemented dynamically (no hardcoded word lists):
   3. Credibility filter - detects and grounds unrealistic claims by property
   4. ATS layer         - natural keyword presence without stuffing
 """
-
 from __future__ import annotations
+import config
 import logging
 from models import TailoredResume
 log = logging.getLogger("calibrator")
@@ -46,6 +46,23 @@ HOW TO FIX IT:
   - Phrases that imply the candidate was directing a team or strategy
   - Language that sounds like a CTO or senior architect wrote it
   - Any phrase where the verb makes the action sound larger than the task itself
+  
+PERMITTED STRONG VERBS - never downgrade these, they are accurate at any level:
+  Result-oriented:   Delivered, Reduced, Improved, Accelerated, Optimized,
+                     Automated, Eliminated, Standardized, Streamlined, Resolved
+  Technical action:  Developed, Implemented, Deployed, Integrated, Configured,
+                     Extracted, Transformed, Consolidated, Migrated, Validated,
+                     Cleaned, Processed, Constructed, Debugged, Troubleshot
+  Analytical:        Analyzed, Evaluated, Assessed, Quantified, Modeled,
+                     Diagnosed, Examined, Identified, Investigated
+  Collaborative:     Collaborated, Coordinated, Documented, Presented, Reported,
+                     Partnered, Supported, Assisted, Remediated
+
+These verbs describe what was DONE, not authority or seniority.
+A 6-month intern can absolutely "Reduced manual entry time", "Debugged a pipeline",
+"Analyzed 5.7M records", or "Automated a reporting process."
+Only downgrade verbs that claim ownership, authority, or strategic direction
+- not verbs that accurately describe the technical or analytical action taken.
 
 ========================================================================
 CONTROL 2 - ABSTRACTION AND JARGON DETECTION
@@ -95,7 +112,7 @@ HOW TO IDENTIFY IT:
 HOW TO FIX IT:
   - Keep all real numbers from the original (record counts, file counts, AIC values).
   - Remove or soften outcome claims that were not explicitly in the original.
-  - Add internship context to bullets that sound like senior production work.
+  - Add internship context to sentences or bullets that sound like senior production work.
   - Describe HOW a result was achieved, not just THAT it was achieved.
     This makes the claim concrete and therefore more credible.
 
@@ -104,7 +121,7 @@ HOW TO FIX IT:
   more credible than "Engineered a production-grade OCR extraction system."
 
 CONTROL 3b - OUTCOME AND BUSINESS LANGUAGE INJECTION:
-For every bullet that describes an action without any result, add a brief outcome.
+For every bullet or sentence that describes an action without any result, add a brief outcome.
 Rules:
   a) If a bullet ends with what was built but not why it mattered, append the
      business consequence. Use language the business cares about:
@@ -118,6 +135,17 @@ Rules:
   d) Outcome language should be plain: "saving X hours", "reducing errors",
      "enabling faster reporting" - not corporate buzzwords.
   e) Every bullet should answer: "so what?" If it doesn't, fix it.
+  f) LENGTH CAP OVERRIDES OUTCOME INJECTION. The word limits in OUTPUT FORMAT are hard limits.
+     If appending an outcome clause would push a bullet over its cap, do NOT append it - trim instead.
+     Never exceed: projects 15 words/bullet, experience 20 words/bullet, summary 22 words/sentence.
+  
+VERB DIVERSITY RULE:
+  After applying all controls, scan all bullets across experience and projects.
+  If the same verb appears more than twice in the full output, replace the weaker
+  occurrences with a synonym from the permitted verbs list above.
+  Example: three bullets starting "Built" → keep the strongest one as "Built",
+  change the others to "Developed", "Constructed", or "Implemented".
+  Repetitive verbs make the resume feel formulaic. Varied verbs signal range.
 
 CONTROL 3c - TOOL AND PLATFORM VISIBILITY:
 Ensure modern tools appear naturally in bullets when the work used them.
@@ -168,8 +196,8 @@ OUTPUT FORMAT
 Return ONLY this JSON - no preamble, no explanation, no markdown fences:
 {
   "summary":    "<calibrated - 2 sentences, each ≤22 words, passes the 6-second test>",
-  "experience": "<calibrated - same bullet structure with '- ' prefix, each bullet ≤20 words>",
-  "projects":   "<calibrated - same bullet structure with '- ' prefix, each bullet ≤20 words>"
+  "experience": "<calibrated experience. KEEP every role header line exactly as given (e.g. 'Title - Company, City | Dates') on its own line, then its bullets. Keep the blank line between roles. Calibrate ONLY the bullet text: '- ' prefix, <=20 words, action verb first, no first-person 'I'. Never drop or merge role headers.>",
+  "projects":   "<calibrated projects. KEEP every project NAME line exactly as given on its own line, then its bullets. Keep the blank line between projects. Calibrate ONLY the bullet text: '- ' prefix, <=15 words, action verb first, no first-person 'I'. Never drop project names or merge projects into one list.>"
 }
 """
 
@@ -197,6 +225,12 @@ async def calibrate(
       {resume.projects or ""}
       
       Apply all four controls using the property-based detection rules.
+      Experience level: {config.EXPERIENCE_LEVEL}.
+      Format: PRESERVE all structure. Keep every project name line and every experience role header line exactly as given, each on its own line, with the blank line between projects/roles intact. Calibrate only the bullet text. Every bullet starts with '- ' and an action verb. No first-person 'I'. Do not convert bullets to paragraphs. Do not delete or merge name/header lines.
+      For Control 1 and 3: calibrate credibility and scope thresholds to match
+      the experience level above. "entry" = intern/grad tone, concrete scope markers,
+      no inflated seniority. "mid" = owns a domain, leads small work, independent delivery.
+      "senior" = leads teams/systems, strategic scope acceptable.
       Return only the JSON.\
       """
     try:
@@ -204,12 +238,17 @@ async def calibrate(
             system=CALIBRATION_SYSTEM,
             user=user_msg,
             expect_json=True,
+            temperature=0.3,
         )
         updated = resume.model_dump()
         for field in ["summary", "experience", "projects"]:
             val = data.get(field, "").strip()
-            if val:
-                updated[field] = val
+            if not val:
+                continue
+            if field in ("experience", "projects") and not _structure_ok(updated[field], val):
+                log.warning(f"Calibration flattened {field} structure - keeping pre-calibration version")
+                continue
+            updated[field] = val
         # Rule-based skills calibration - no LLM call needed
         if updated.get("skills"):
             updated["skills"] = _calibrate_skills(updated["skills"])
@@ -218,6 +257,14 @@ async def calibrate(
     except Exception as e:
         log.warning(f"Calibration skipped (resume unchanged): {e}")
         return resume
+      
+def _structure_ok(original: str, calibrated: str) -> bool:
+    """Calibration must preserve the header/name lines (non-bullet, non-blank).
+    If the calibrated text dropped any, it flattened the structure - reject it."""
+    def headers(t):
+        return [ln.strip() for ln in t.splitlines()
+                if ln.strip() and not ln.strip().startswith("-")]
+    return len(headers(calibrated)) >= len(headers(original))
 
 def _calibrate_skills(skills: str) -> str:
     """

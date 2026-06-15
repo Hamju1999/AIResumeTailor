@@ -158,6 +158,7 @@ def api_setup():
             json.dumps(cfg, indent=2, ensure_ascii=False), encoding="utf-8"
         )
         config.reload()
+        import format_parser as _fp; _fp.reset()
         logging.getLogger("setup").info("Setup complete - configuration saved.")
         return jsonify({"ok": True, "redirect": "/"})
     except Exception as e:
@@ -438,7 +439,7 @@ async def _run_custom_urls(urls: list[str]):
     for i, job in enumerate(jobs):
         intel = await ci.gather(company_name=job.company, job_title=job.title, jd_text=job.description)
         _sponsorship_cache[job.job_id] = intel.sponsorship if intel else {}
-        outcome = await pl._process_job(job, include_certs=_run_state.get("include_certs", False))
+        outcome = await pl._process_job(job, include_certs=_run_state.get("include_certs", False), intel=intel)
         if hasattr(outcome, "resume_path"):
             results.append(outcome)
         else:
@@ -479,7 +480,7 @@ async def _run_paste_jd(jd_text: str, title: str, company: str):
     log.info(f"Processing pasted JD: {title} @ {company}")
     run_id = uuid.uuid4().hex[:8]
     pl._run_id = run_id
-    outcome = await pl._process_job(job, include_certs=_run_state.get("include_certs", False))
+    outcome = await pl._process_job(job, include_certs=_run_state.get("include_certs", False), intel=intel)
     results  = [outcome] if hasattr(outcome, "resume_path") else []
     failures = [outcome] if not hasattr(outcome, "resume_path") else []
     from models import PipelineRun
